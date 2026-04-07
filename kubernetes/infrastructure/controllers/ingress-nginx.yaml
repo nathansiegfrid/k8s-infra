@@ -35,5 +35,3 @@ spec:
         enabled: true
       service:
         type: ClusterIP
-      extraArgs:
-        default-ssl-certificate: "cert-manager/wildcard-tls"
