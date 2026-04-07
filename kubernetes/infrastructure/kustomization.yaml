@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - controllers.yaml
   - configs.yaml
+  - monitoring.yaml
