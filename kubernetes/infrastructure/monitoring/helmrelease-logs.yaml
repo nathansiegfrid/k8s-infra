@@ -146,11 +146,6 @@ spec:
     write:
       replicas: 0
 
-    # Add label to loki-canary pod so it doesn't show as "unknown_service"
-    lokiCanary:
-      podLabels:
-        app.kubernetes.io/name: loki-canary
-
     # Disable bundled Grafana and Prometheus (already running)
     grafana:
       enabled: false
