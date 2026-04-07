@@ -18,7 +18,7 @@ tunnel:
 
 bootstrap:
 	scp $(SERVER_USER)@$(SERVER_HOST):/etc/rancher/k3s/k3s.yaml ./kubeconfig
-	flux bootstrap github \
+	GITHUB_TOKEN=$(GITHUB_PAT) flux bootstrap github \
 		--kubeconfig=./kubeconfig \
 		--owner=siegfriden \
 		--repository=k3s-infra \
