@@ -10,7 +10,7 @@
 
     - name: Apply sealed secrets key
       ansible.builtin.shell: |
-        cat <<EOF | k3s kubectl apply -f -
+        cat <<EOF | /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
         apiVersion: v1
         kind: Secret
         metadata:

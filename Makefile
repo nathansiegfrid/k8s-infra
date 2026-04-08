@@ -16,12 +16,15 @@ forget:
 tunnel:
 	ssh -L 6443:localhost:6443 $(SERVER_USER)@$(SERVER_HOST)
 
+kubeconfig:
+	scp $(SERVER_USER)@$(SERVER_HOST):/etc/rancher/rke2/rke2.yaml ./kubeconfig
+
 bootstrap:
-	scp $(SERVER_USER)@$(SERVER_HOST):/etc/rancher/k3s/k3s.yaml ./kubeconfig
+	@make kubeconfig
 	GITHUB_TOKEN=$(GITHUB_PAT) flux bootstrap github \
 		--kubeconfig=./kubeconfig \
 		--owner=siegfriden \
-		--repository=k3s-infra \
+		--repository=k8s-infra \
 		--branch=main \
 		--path=kubernetes \
 		--personal
