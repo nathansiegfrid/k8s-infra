@@ -1,0 +1,32 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: no-hostpath
+  annotations:
+    policies.kyverno.io/title: No HostPath Volumes
+    policies.kyverno.io/category: CIS
+    policies.kyverno.io/description: >-
+      Pods must not use HostPath volumes, which allow containers to access the
+      host filesystem and are a common container escape vector. Satisfies CIS 5.2.12.
+spec:
+  validationFailureAction: Enforce
+  rules:
+    - name: no-hostpath
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - monitoring
+      validate:
+        message: "HostPath volumes are not allowed."
+        deny:
+          conditions:
+            any:
+              - key: "{{ request.object.spec.volumes[].hostPath | [?@ != null] | length(@) }}"
+                operator: GreaterThan
+                value: 0

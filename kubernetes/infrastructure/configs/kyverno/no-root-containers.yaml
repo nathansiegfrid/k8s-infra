@@ -1,0 +1,33 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: no-root-containers
+  annotations:
+    policies.kyverno.io/title: No Root Containers
+    policies.kyverno.io/category: CIS
+    policies.kyverno.io/description: >-
+      Containers must not run as root. Satisfies CIS Kubernetes Benchmark 5.2.7.
+spec:
+  validationFailureAction: Enforce
+  rules:
+    - name: no-root-containers
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - monitoring
+      validate:
+        message: "Containers must not run as root. Set securityContext.runAsNonRoot: true."
+        pattern:
+          spec:
+            =(initContainers):
+              - securityContext:
+                  runAsNonRoot: true
+            containers:
+              - securityContext:
+                  runAsNonRoot: true

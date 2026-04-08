@@ -1,0 +1,12 @@
+cni: cilium
+profile: cis
+kube-apiserver-arg:
+  - "service-account-extend-token-expiration=false"
+  - "enable-admission-plugins=DenyServiceExternalIPs,EventRateLimit"
+  - "admission-control-config-file=/etc/rancher/rke2/admission-config.yaml"
+audit-policy-file: /etc/rancher/rke2/audit-policy.yaml
+write-kubeconfig-mode: "0644"
+
+# disable cis profile's unknown flag --pod-pids-limit (deprecated)
+kubelet-arg:
+  - "pod-pids-limit="

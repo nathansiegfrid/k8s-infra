@@ -1,0 +1,34 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: no-net-raw
+  annotations:
+    policies.kyverno.io/title: No NET_RAW Capability
+    policies.kyverno.io/category: CIS
+    policies.kyverno.io/description: >-
+      Containers must not add the NET_RAW capability, which allows crafting raw
+      packets and is a common privilege escalation vector. Satisfies CIS 5.2.8.
+spec:
+  validationFailureAction: Enforce
+  rules:
+    - name: no-net-raw
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+      validate:
+        message: "Adding the NET_RAW capability is not allowed."
+        deny:
+          conditions:
+            any:
+              - key: "{{ request.object.spec.containers[].securityContext.capabilities.add[] | [?@ == 'NET_RAW'] | length(@) }}"
+                operator: GreaterThan
+                value: 0
+              - key: "{{ request.object.spec.initContainers[].securityContext.capabilities.add[] | [?@ == 'NET_RAW'] | length(@) }}"
+                operator: GreaterThan
+                value: 0

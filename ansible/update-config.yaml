@@ -1,0 +1,29 @@
+---
+- name: Update RKE2 config and restart
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Copy RKE2 config files
+      copy:
+        src: files/rke2/
+        dest: /etc/rancher/rke2/
+        owner: root
+        group: root
+        mode: "0600"
+      notify: Restart rke2-server
+
+    - name: Copy kubelet config
+      copy:
+        src: files/kubelet/
+        dest: /etc/rancher/rke2/agent/etc/kubelet.conf.d/
+        owner: root
+        group: root
+        mode: "0600"
+      notify: Restart rke2-server
+
+  handlers:
+    - name: Restart rke2-server
+      systemd:
+        name: rke2-server
+        state: restarted

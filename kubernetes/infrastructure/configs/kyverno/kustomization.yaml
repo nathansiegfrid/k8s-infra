@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - disable-default-sa-automount.yaml
+  - no-root-containers.yaml
+  - no-net-raw.yaml
+  - no-added-capabilities.yaml
+  - no-hostpath.yaml
+  - no-hostports.yaml
+  - default-deny-networkpolicy.yaml
+  - restrict-default-namespace.yaml

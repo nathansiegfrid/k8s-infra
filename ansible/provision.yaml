@@ -48,23 +48,25 @@
         enabled: true
         state: started
 
-    # rke2
+    # RKE2
 
-    - name: Install rke2
+    - name: Install RKE2
       shell: curl -sfL https://get.rke2.io | sh -
       args:
         creates: /usr/local/bin/rke2
 
-    - name: Write rke2 config
+    - name: Copy RKE2 config files
       copy:
-        dest: /etc/rancher/rke2/config.yaml
-        content: |
-          cni: cilium
-          profile: cis
-          kube-apiserver-arg:
-            - "service-account-extend-token-expiration=false"
-          audit-policy-file: /etc/rancher/rke2/audit-policy.yaml
-          write-kubeconfig-mode: "0644"
+        src: files/rke2/
+        dest: /etc/rancher/rke2/
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Copy kubelet config
+      copy:
+        src: files/kubelet/
+        dest: /etc/rancher/rke2/agent/etc/kubelet.conf.d/
         owner: root
         group: root
         mode: "0600"
@@ -91,25 +93,13 @@
         name: systemd-sysctl
         state: restarted
 
-    - name: Write audit policy
-      copy:
-        dest: /etc/rancher/rke2/audit-policy.yaml
-        content: |
-          apiVersion: audit.k8s.io/v1
-          kind: Policy
-          rules:
-            - level: Metadata
-        owner: root
-        group: root
-        mode: "0600"
-
     - name: Enable and start rke2-server
       systemd:
         name: rke2-server
         enabled: true
         state: started
 
-    - name: Wait for rke2 to be ready
+    - name: Wait for RKE2 to be ready
       command: /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get nodes
       register: rke2_ready
       retries: 10

@@ -4,6 +4,9 @@ export
 provision:
 	ansible-playbook -i "$(SERVER_HOST)," -u root ansible/provision.yaml
 
+update-config:
+	ansible-playbook -i "$(SERVER_HOST)," -u $(SERVER_USER) ansible/update-config.yaml
+
 master-key:
 	ansible-playbook -i "$(SERVER_HOST)," -u $(SERVER_USER) ansible/master-key.yaml
 
