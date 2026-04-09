@@ -39,6 +39,14 @@ spec:
             policyTypes:
               - Ingress
               - Egress
+            ingress:
+              - from:
+                  - namespaceSelector:
+                      matchLabels:
+                        kubernetes.io/metadata.name: kube-system
+                  - namespaceSelector:
+                      matchLabels:
+                        kubernetes.io/metadata.name: monitoring
             egress:
               - ports:
                   - port: 53
