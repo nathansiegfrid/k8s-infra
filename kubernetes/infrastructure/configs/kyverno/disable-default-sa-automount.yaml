@@ -18,5 +18,9 @@ spec:
               kinds: [ServiceAccount]
               names: [default]
       mutate:
+        targets:
+          - apiVersion: v1
+            kind: ServiceAccount
+            name: default
         patchStrategicMerge:
           automountServiceAccountToken: false
