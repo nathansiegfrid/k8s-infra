@@ -3,6 +3,5 @@ disable-network-policy: true
 disable:
   - traefik
   - servicelb
-  - local-storage
 flannel-backend: none
 write-kubeconfig-mode: "0644"
