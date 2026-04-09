@@ -5,4 +5,4 @@ resources:
   - helmrelease-metrics.yaml
   - helmrelease-logs.yaml
   - grafana-admin-secret.yaml
-  - grafana-ingress.yaml
+  - grafana-httproute.yaml
