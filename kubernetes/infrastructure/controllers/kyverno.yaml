@@ -28,3 +28,18 @@ spec:
         kind: HelmRepository
         name: kyverno
         namespace: flux-system
+  values:
+    backgroundController:
+      rbac:
+        clusterRole:
+          extraResources:
+          - apiGroups:
+              - ""
+            resources:
+              - serviceaccounts
+            verbs:
+              - get
+              - list
+              - watch
+              - update
+              - patch
