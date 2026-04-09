@@ -10,18 +10,14 @@ metadata:
       modifying workloads in core system namespaces.
 spec:
   validationFailureAction: Enforce
+  background: false
   rules:
     - name: block-system-namespace-writes
       match:
         any:
           - resources:
               kinds:
-                - Pod
-                - Deployment
-                - StatefulSet
-                - DaemonSet
-                - Job
-                - CronJob
+                - "*"
               namespaces:
                 - kube-system
                 - flux-system
@@ -36,14 +32,19 @@ spec:
               - kind: Group
                 name: system:masters
               - kind: ServiceAccount
+                name: "*"
                 namespace: kube-system
               - kind: ServiceAccount
+                name: "*"
                 namespace: flux-system
               - kind: ServiceAccount
+                name: "*"
                 namespace: kyverno
               - kind: ServiceAccount
+                name: "*"
                 namespace: cert-manager
               - kind: ServiceAccount
+                name: "*"
                 namespace: monitoring
       validate:
         message: "Manually deploying workloads to system namespaces is forbidden. Use Flux or contact a cluster-admin."
