@@ -16,6 +16,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 30m
+  releaseName: cilium
   targetNamespace: kube-system
   install:
     remediation:

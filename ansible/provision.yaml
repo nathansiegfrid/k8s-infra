@@ -44,6 +44,12 @@
       args:
         creates: /usr/local/bin/helm
 
+    - name: Install Gateway API CRDs
+      command: >
+        k3s kubectl apply -f
+        https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
+      changed_when: false
+
     - name: Install Cilium via Helm
       command: >
         helm install cilium oci://quay.io/cilium/charts/cilium
