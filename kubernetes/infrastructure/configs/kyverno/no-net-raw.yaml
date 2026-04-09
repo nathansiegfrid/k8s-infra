@@ -24,12 +24,20 @@ spec:
                 - flux-system
       validate:
         message: "Adding the NET_RAW capability is not allowed."
-        deny:
-          conditions:
-            any:
-              - key: "{{ request.object.spec.containers[].securityContext.capabilities.add[] | [?@ == 'NET_RAW'] | length(@) }}"
-                operator: GreaterThan
-                value: 0
-              - key: "{{ request.object.spec.initContainers[].securityContext.capabilities.add[] | [?@ == 'NET_RAW'] | length(@) }}"
-                operator: GreaterThan
-                value: 0
+        pattern:
+          spec:
+            =(ephemeralContainers):
+              - =(securityContext):
+                  =(capabilities):
+                    =(add):
+                      - "!NET_RAW"
+            =(initContainers):
+              - =(securityContext):
+                  =(capabilities):
+                    =(add):
+                      - "!NET_RAW"
+            =(containers):
+              - =(securityContext):
+                  =(capabilities):
+                    =(add):
+                      - "!NET_RAW"

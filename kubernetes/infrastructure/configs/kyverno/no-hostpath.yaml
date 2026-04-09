@@ -24,9 +24,7 @@ spec:
                 - monitoring
       validate:
         message: "HostPath volumes are not allowed."
-        deny:
-          conditions:
-            any:
-              - key: "{{ request.object.spec.volumes[].hostPath | [?@ != null] | length(@) }}"
-                operator: GreaterThan
-                value: 0
+        pattern:
+          spec:
+            =(volumes):
+              - X(hostPath): null
