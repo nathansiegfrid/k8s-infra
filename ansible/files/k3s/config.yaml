@@ -1,7 +1,4 @@
-disable-kube-proxy: true
-disable-network-policy: true
 disable:
   - traefik
   - servicelb
-flannel-backend: none
 write-kubeconfig-mode: "0644"

@@ -2,7 +2,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: wildcard-tls
-  namespace: kube-system
+  namespace: envoy-gateway-system
 spec:
   secretName: wildcard-tls
   issuerRef:

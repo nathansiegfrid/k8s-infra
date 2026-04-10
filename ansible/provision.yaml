@@ -37,39 +37,12 @@
       until: k3s_ready.rc == 0
       changed_when: false
 
-    # Cilium (CNI)
-
-    - name: Install Helm
-      shell: curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-      args:
-        creates: /usr/local/bin/helm
+    # Gateway API
 
     - name: Install Gateway API CRDs
       command: >
         k3s kubectl apply -f
         https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
-      changed_when: false
-
-    - name: Install Cilium via Helm
-      command: >
-        helm install cilium oci://quay.io/cilium/charts/cilium
-        --namespace kube-system
-        --version 1.19.2
-        --set operator.replicas=1
-        --set kubeProxyReplacement=true
-        --set k8sServiceHost=127.0.0.1
-        --set k8sServicePort=6443
-        --kubeconfig /etc/rancher/k3s/k3s.yaml
-      register: cilium_install
-      changed_when: "'has been upgraded' in cilium_install.stdout or 'has been installed' in cilium_install.stdout"
-
-    - name: Wait for Cilium to be ready
-      command: >
-        k3s kubectl wait --for=condition=Ready
-        pods -l app.kubernetes.io/name=cilium-agent
-        -n kube-system --timeout=120s
-      retries: 5
-      delay: 10
       changed_when: false
 
     # SSH

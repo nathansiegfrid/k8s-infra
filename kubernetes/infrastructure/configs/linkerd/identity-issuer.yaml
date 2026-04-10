@@ -1,0 +1,63 @@
+# Step 1: Self-signed issuer to bootstrap the trust anchor CA
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: linkerd-trust-anchor-selfsigned
+  namespace: linkerd
+spec:
+  selfSigned: {}
+
+---
+# Step 2: Trust anchor CA certificate (root CA for Linkerd mTLS)
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: linkerd-trust-anchor
+  namespace: linkerd
+spec:
+  isCA: true
+  commonName: root.linkerd.cluster.local
+  secretName: linkerd-trust-anchor
+  duration: 87600h # 10 years
+  renewBefore: 8760h # 1 year
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: linkerd-trust-anchor-selfsigned
+    kind: Issuer
+    group: cert-manager.io
+
+---
+# Step 3: CA issuer backed by the trust anchor
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: linkerd-trust-anchor
+  namespace: linkerd
+spec:
+  ca:
+    secretName: linkerd-trust-anchor
+
+---
+# Step 4: Identity issuer certificate (intermediate CA used by Linkerd proxy injector)
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: linkerd-identity-issuer
+  namespace: linkerd
+spec:
+  isCA: true
+  commonName: identity.linkerd.cluster.local
+  secretName: linkerd-identity-issuer
+  duration: 48h
+  renewBefore: 25h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  dnsNames:
+    - identity.linkerd.cluster.local
+  issuerRef:
+    name: linkerd-trust-anchor
+    kind: Issuer
+    group: cert-manager.io

@@ -6,7 +6,7 @@ metadata:
 spec:
   parentRefs:
     - name: main-gateway
-      namespace: kube-system
+      namespace: envoy-gateway-system
       sectionName: https
   hostnames:
     - hello.siegfrid.com

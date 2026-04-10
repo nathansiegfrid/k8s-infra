@@ -1,0 +1,19 @@
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: host-network-proxy
+  namespace: envoy-gateway-system
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyDeployment:
+        pod:
+          annotations:
+            linkerd.io/inject: disabled
+          hostNetwork: true
+        container:
+          securityContext:
+            capabilities:
+              add:
+                - NET_BIND_SERVICE
