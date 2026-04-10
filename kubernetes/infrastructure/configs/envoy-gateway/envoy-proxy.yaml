@@ -11,9 +11,3 @@ spec:
         pod:
           annotations:
             linkerd.io/inject: disabled
-          hostNetwork: true
-        container:
-          securityContext:
-            capabilities:
-              add:
-                - NET_BIND_SERVICE
