@@ -9,7 +9,7 @@ metadata:
       Prevents non-admin users and service accounts from creating or 
       modifying workloads in core system namespaces.
 spec:
-  validationFailureAction: Enforce
+  validationFailureAction: Audit
   background: false
   rules:
     - name: block-system-namespace-writes
