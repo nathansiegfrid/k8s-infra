@@ -97,5 +97,10 @@ spec:
         name: linkerd
         namespace: flux-system
   values:
+    prometheus:
+      enabled: false
+    prometheusUrl: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+    # Enable to access Linkerd Viz:
+    # kubectl -n linkerd-viz port-forward svc/web 8084:8084
     dashboard:
-      enforcedHostRegexp: ".*"
+      enabled: false
