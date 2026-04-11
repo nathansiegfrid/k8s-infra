@@ -36,3 +36,5 @@ bootstrap: kubeconfig
 		--path=kubernetes \
 		--personal
 
+seal-secret:
+	kubeseal --format yaml < secret.yaml > sealed-secret.yaml
