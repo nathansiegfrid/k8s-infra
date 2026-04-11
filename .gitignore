@@ -1,16 +1,18 @@
+# Sensitive files
 .env
 .env.*
 !.env.example
 *.key
 *.pem
 *.crt
-
 kubeconfig
 
+# Ansible
 ansible.cfg
 ansible/inventory.ini
 ansible/vars.yaml
 
+# IDE
 .claude
 .vscode/
 !.vscode/extensions.json
@@ -21,3 +23,6 @@ ansible/vars.yaml
 *~
 .DS_Store
 Thumbs.db
+
+# Custom suffix for ignored files (drafts, etc.)
+*.ignore
