@@ -76,7 +76,6 @@ spec:
   target:
     configMap:
       key: ca-bundle.crt
-    namespaces:
-      selector:
-        matchLabels:
-          linkerd.io/is-control-plane: "true"
+    namespaceSelector:
+      matchLabels:
+        linkerd.io/is-control-plane: "true"
