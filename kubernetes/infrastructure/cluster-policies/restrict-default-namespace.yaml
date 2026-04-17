@@ -21,9 +21,31 @@ spec:
                 - DaemonSet
                 - Job
                 - CronJob
+                - Service
+                - Ingress
+                - ConfigMap
+                - Secret
+                - PersistentVolumeClaim
+                - ServiceAccount
+      exclude:
+        any:
+          - resources:
+              namespaces: [default]
+              kinds: [Service]
+              names: [kubernetes]
+          - resources:
+              namespaces: [default]
+              kinds: [ConfigMap]
+              names: [kube-root-ca.crt]
+          - resources:
+              namespaces: [default]
+              kinds: [ServiceAccount]
+              names: [default]
       validate:
         message: "Using the default namespace is not allowed. Create a dedicated namespace for your workload."
-        pattern:
-          metadata:
-            namespace: "?*"
-          (metadata.namespace != 'default'): true
+        deny:
+          conditions:
+            any:
+              - key: "{{ request.object.metadata.namespace || '' }}"
+                operator: Equals
+                value: default
