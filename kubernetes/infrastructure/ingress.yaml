@@ -5,13 +5,13 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m
-  dependsOn:
-    - name: cert-manager
-    - name: envoy-gateway
-    - name: sealed-secrets
   sourceRef:
     kind: GitRepository
     name: flux-system
   path: ./kubernetes/infrastructure/ingress
   prune: true
   wait: true
+  dependsOn:
+    - name: cert-manager
+    - name: envoy-gateway
+    - name: sealed-secrets

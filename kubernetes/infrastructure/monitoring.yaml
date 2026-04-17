@@ -5,11 +5,11 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m
-  dependsOn:
-    - name: sealed-secrets
   sourceRef:
     kind: GitRepository
     name: flux-system
   path: ./kubernetes/infrastructure/monitoring
   prune: true
   wait: true
+  dependsOn:
+    - name: sealed-secrets
