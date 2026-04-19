@@ -3,4 +3,4 @@ kind: Namespace
 metadata:
   name: monitoring
   labels:
-    gateway.k8s.local/listener-attach: "true"
+    gateway-access: "true"
