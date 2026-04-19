@@ -12,7 +12,7 @@ spec:
     - grafana.siegfrid.com
 
 ---
-apiVersion: gateway.networking.x-k8s.io/v1
+apiVersion: gateway.networking.x-k8s.io/v1alpha1
 kind: XListenerSet
 metadata:
   name: grafana
