@@ -1,10 +1,10 @@
-variable "server_hosts" {
-  description = "IPv4 addresses of the servers."
+variable "cluster_ipv4s" {
+  description = "IPv4 addresses of the cluster nodes."
   type        = list(string)
 }
 
-variable "server_subdomain" {
-  description = "Subdomain for the server (e.g. k8s.example.com)."
+variable "cluster_subdomain" {
+  description = "Subdomain for the cluster (e.g. k8s.example.com)."
   type        = string
 }
 
