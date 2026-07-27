@@ -1,15 +1,13 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: linkerd
+  name: envoy-gateway
   namespace: flux-system
 spec:
   interval: 10m
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./kubernetes/infrastructure/linkerd
+  path: ./clusters/cluster-01-k3s/infrastructure/envoy-gateway
   prune: true
   wait: true
-  dependsOn:
-    - name: cert-manager

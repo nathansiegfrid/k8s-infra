@@ -1,13 +1,17 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: envoy-gateway
+  name: ingress
   namespace: flux-system
 spec:
   interval: 10m
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./kubernetes/infrastructure/envoy-gateway
+  path: ./clusters/cluster-01-k3s/infrastructure/ingress
   prune: true
   wait: true
+  dependsOn:
+    - name: cert-manager
+    - name: envoy-gateway
+    - name: sealed-secrets

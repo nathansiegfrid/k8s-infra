@@ -13,9 +13,9 @@ bootstrap: kubeconfig
 	GITHUB_TOKEN=$(GITHUB_PAT) flux bootstrap github \
 		--kubeconfig=./kubeconfig \
 		--owner=nathansiegfrid \
-		--repository=k8s-infra \
+		--repository=k8s-platform \
 		--branch=main \
-		--path=kubernetes \
+		--path=clusters/cluster-01-k3s \
 		--personal
 
 seal-secret:
