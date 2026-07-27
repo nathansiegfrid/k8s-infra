@@ -1,9 +1,0 @@
----
-- name: Manage users
-  hosts: all
-  become: true
-  vars_files:
-    - vars.yaml
-
-  roles:
-    - role: users

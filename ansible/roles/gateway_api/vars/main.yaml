@@ -1,2 +1,0 @@
----
-gateway_api_url: "https://github.com/kubernetes-sigs/gateway-api/releases/download/{{ gateway_api_version }}/{{ gateway_api_channel }}-install.yaml"

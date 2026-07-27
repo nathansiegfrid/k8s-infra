@@ -1,9 +1,0 @@
----
-- name: Update K3s
-  hosts: all
-  become: true
-  tasks:
-    - name: Update K3s
-      import_role:
-        name: k3s
-        tasks_from: install.yaml

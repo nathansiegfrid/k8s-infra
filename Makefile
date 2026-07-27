@@ -1,30 +1,7 @@
 -include .env
 export
 
-.PHONY: provision reinstall update-config master-key users forget tunnel kubeconfig bootstrap
-
-provision:
-	ansible-playbook -i "$(SERVER_HOST)," -u root ansible/provision.yaml
-reinstall:
-	ansible-playbook -i "$(SERVER_HOST)," -u $(SERVER_USER) ansible/reinstall.yaml
-update-k3s:
-	ansible-playbook -i "$(SERVER_HOST)," -u $(SERVER_USER) ansible/update-k3s.yaml
-update-gateway-api:
-	ansible-playbook -i "$(SERVER_HOST)," -u $(SERVER_USER) ansible/update-gateway-api.yaml
-master-key:
-	ansible-playbook -i "$(SERVER_HOST)," -u $(SERVER_USER) ansible/master-key.yaml
-users:
-	ansible-playbook -i "$(SERVER_HOST)," -u $(SERVER_USER) ansible/users.yaml
-
-tf-init:
-	terraform -chdir=terraform init
-tf-init-upgrade:
-	terraform -chdir=terraform init -upgrade
-tf-apply:
-	terraform -chdir=terraform apply -auto-approve
-
-forget:
-	ssh-keygen -R $(SERVER_HOST)
+.PHONY: tunnel kubeconfig bootstrap seal-secret forward-kyverno forward-linkerd
 
 tunnel:
 	ssh -L 6443:localhost:6443 $(SERVER_USER)@$(SERVER_HOST)

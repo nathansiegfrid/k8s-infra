@@ -7,11 +7,6 @@
 *.crt
 kubeconfig
 
-# Ansible
-ansible.cfg
-ansible/inventory.ini
-ansible/vars.yaml
-
 # IDE
 .claude
 .vscode/

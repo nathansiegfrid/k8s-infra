@@ -1,8 +1,0 @@
----
-- name: Update Gateway API CRDs
-  hosts: all
-  become: true
-  tasks:
-    - name: Install Gateway API CRDs
-      import_role:
-        name: gateway_api

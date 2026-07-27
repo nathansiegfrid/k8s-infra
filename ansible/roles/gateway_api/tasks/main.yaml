@@ -1,4 +1,0 @@
----
-- name: Install Gateway API CRDs
-  command: "k3s kubectl apply --server-side -f {{ gateway_api_url }}"
-  changed_when: false
