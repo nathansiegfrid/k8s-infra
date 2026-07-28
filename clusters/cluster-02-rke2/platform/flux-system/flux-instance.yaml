@@ -14,6 +14,6 @@ spec:
   sync:
     kind: GitRepository
     url: ssh://git@github.com/nathansiegfrid/k8s-platform.git
-    ref: refs/heads/main
+    ref: refs/heads/develop
     path: ./clusters/cluster-02-rke2
     pullSecret: flux-system-git-auth
