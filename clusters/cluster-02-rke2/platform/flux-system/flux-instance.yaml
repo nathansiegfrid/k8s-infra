@@ -1,0 +1,19 @@
+apiVersion: fluxcd.controlplane.io/v1
+kind: FluxInstance
+metadata:
+  name: flux
+  namespace: flux-system
+spec:
+  distribution:
+    version: "2.9.x"
+    registry: ghcr.io/fluxcd
+  cluster:
+    type: kubernetes
+    size: medium
+    multitenant: true
+  sync:
+    kind: GitRepository
+    url: ssh://git@github.com/nathansiegfrid/k8s-platform.git
+    ref: refs/heads/main
+    path: ./clusters/cluster-02-rke2
+    pullSecret: flux-system-git-auth
