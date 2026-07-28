@@ -4,7 +4,6 @@ metadata:
   name: flux-operator
   namespace: flux-system
 spec:
-  serviceAccountName: kustomize-controller
   interval: 10m
   prune: true
   wait: true
