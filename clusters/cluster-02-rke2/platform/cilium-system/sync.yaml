@@ -1,0 +1,20 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cilium-system
+  namespace: flux-system
+spec:
+  serviceAccountName: kustomize-controller
+  targetNamespace: cilium-system
+  interval: 10m
+  timeout: 5m
+
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./platform/cilium
+  prune: true
+  wait: true
+
+  dependsOn:
+    - name: cilium-system-rbac

@@ -1,0 +1,29 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cilium-system-rbac
+  namespace: flux-system
+spec:
+  serviceAccountName: kustomize-controller
+  targetNamespace: cilium-system
+  interval: 10m
+  timeout: 5m
+
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./base/platform-rbac
+  prune: true
+  wait: true
+
+  # Allow privileged Pod Security for Cilium.
+  patches:
+    - patch: |
+        apiVersion: v1
+        kind: Namespace
+        metadata:
+          name: cilium-system
+          labels:
+            pod-security.kubernetes.io/enforce: privileged
+            pod-security.kubernetes.io/warn: privileged
+            pod-security.kubernetes.io/audit: privileged
