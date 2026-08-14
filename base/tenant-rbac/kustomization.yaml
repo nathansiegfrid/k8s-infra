@@ -1,9 +1,6 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# Override via Flux's Kustomization
-namespace: default
-
 resources:
   - namespace.yaml
   - rbac.yaml
@@ -13,9 +10,16 @@ replacements:
       kind: Namespace
       fieldPath: metadata.name
     targets:
-      # Dynamically set RoleBinding subject namespace
+      # Set ServiceAccount namespace.
+      - select:
+          kind: ServiceAccount
+          name: tenant-reconciler
+        fieldPaths:
+          - metadata.namespace
+      # Set RoleBinding namespace and subject namespace.
       - select:
           kind: RoleBinding
           name: tenant-reconciler
         fieldPaths:
+          - metadata.namespace
           - subjects.[name=tenant-reconciler].namespace
