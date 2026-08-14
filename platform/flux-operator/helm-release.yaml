@@ -4,7 +4,10 @@ metadata:
   name: flux-operator
   namespace: flux-system
 spec:
-  interval: 1h0m0s
+  serviceAccountName: helm-controller
+  interval: 1h
+  timeout: 5m
+
   chart:
     spec:
       chart: flux-operator
