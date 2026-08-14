@@ -1,7 +1,13 @@
+# This file is a template consumed by kustomization.yaml.
+# The namespace field is set to "_" as a placeholder. At build time, the
+# kustomization `replacements` block rewrites it using the actual Namespace
+# resource name defined in namespace.yaml.
+
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: cluster-reconciler
+  namespace: _
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
