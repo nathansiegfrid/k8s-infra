@@ -11,9 +11,10 @@ spec:
     type: kubernetes
     size: medium
     multitenant: true
+    tenantDefaultServiceAccount: flux
   sync:
     kind: GitRepository
     url: ssh://git@github.com/nathansiegfrid/k8s-platform.git
     ref: refs/heads/develop
     path: ./clusters/cluster-02-rke2
-    pullSecret: flux-system-git-auth
+    pullSecret: flux-system
