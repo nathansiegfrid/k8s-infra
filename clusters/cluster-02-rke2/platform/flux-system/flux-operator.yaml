@@ -4,11 +4,13 @@ metadata:
   name: flux-operator
   namespace: flux-system
 spec:
+  serviceAccountName: kustomize-controller
   interval: 10m
-  prune: true
-  wait: true
+  timeout: 5m
 
-  path: platform/flux-operator
   sourceRef:
     kind: GitRepository
     name: flux-system
+  path: ./platform/flux-operator
+  prune: true
+  wait: true
