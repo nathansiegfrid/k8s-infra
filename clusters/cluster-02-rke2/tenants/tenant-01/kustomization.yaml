@@ -1,6 +1,5 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: tenant-01
 
 resources:
   - namespace.yaml
@@ -19,6 +18,7 @@ replacements:
           name: tenant-reconciler
         fieldPaths:
           - metadata.namespace
+
       # Set RoleBinding namespace and subject namespace.
       - select:
           kind: RoleBinding
@@ -26,13 +26,15 @@ replacements:
         fieldPaths:
           - metadata.namespace
           - subjects.[name=tenant-reconciler].namespace
+
       # Set GitRepository namespace.
       - select:
           kind: GitRepository
           name: flux
         fieldPaths:
           - metadata.namespace
-      # Set Flux Kustomization namespace.
+
+      # Set Flux Kustomization namespace and targetNamespace.
       - select:
           kind: Kustomization
           name: flux
