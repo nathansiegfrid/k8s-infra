@@ -1,0 +1,114 @@
+# Deployed by Ansible.
+# Do not edit manually, changes will be overwritten.
+#
+# Required RKE2 ports:
+# https://docs.rke2.io/install/requirements#inbound-network-rules
+#
+# List of Cilium entities:
+# https://docs.cilium.io/en/latest/security/policy/layer3/#entities-based
+
+apiVersion: cilium.io/v2
+kind: CiliumClusterwideNetworkPolicy
+metadata:
+  name: rke2-all-nodes
+spec:
+  nodeSelector:
+    matchLabels: {}
+  ingress:
+    - icmps:
+        - fields:
+            - type: EchoRequest
+              family: IPv4
+    - toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+            - port: "443"
+              protocol: TCP
+            - port: "41820" # WireGuard port
+              protocol: UDP
+
+    # Allow SSH on WireGuard network.
+    - fromCIDR:
+        - 10.0.0.0/24
+      toPorts:
+        - ports:
+            - port: "22"
+              protocol: TCP
+
+    # Allow kubelet API/metrics from API server and cluster.
+    - fromEntities:
+        - kube-apiserver
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "10250"
+              protocol: TCP
+
+    # Allow Cilium CNI health checks.
+    - fromEntities:
+        - health
+        - host
+      toPorts:
+        - ports:
+            - port: "4240"
+              protocol: TCP
+
+    # Allow node-to-node CNI overlay traffic.
+    - fromEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "8472" # Cilium CNI with VXLAN
+              protocol: UDP
+            - port: "51871" # Cilium CNI with WireGuard
+              protocol: UDP
+
+---
+apiVersion: cilium.io/v2
+kind: CiliumClusterwideNetworkPolicy
+metadata:
+  name: rke2-master-nodes
+spec:
+  nodeSelector:
+    matchLabels:
+      node-role.kubernetes.io/control-plane: "true"
+  ingress:
+    # Allow RKE2 supervisor API on WireGuard network.
+    - fromCIDR:
+        - 10.0.0.0/24
+      toPorts:
+        - ports:
+            - port: "9345"
+              protocol: TCP
+
+    # Allow Kubernetes API from within cluster.
+    - fromEntities:
+        - cluster
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
+
+    # Allow RKE2 supervisor API for node bootstrapping and management.
+    - fromEntities:
+        - init
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "9345"
+              protocol: TCP
+
+    # Allow etcd client/peer ports only between master nodes.
+    - fromNodes:
+        - matchLabels:
+            node-role.kubernetes.io/control-plane: "true"
+      toPorts:
+        - ports:
+            - port: "2379"
+              protocol: TCP
+            - port: "2380"
+              protocol: TCP
