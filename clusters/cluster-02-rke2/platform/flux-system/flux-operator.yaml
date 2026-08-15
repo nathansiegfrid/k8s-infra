@@ -11,6 +11,6 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./platform/flux-operator
+  path: ./apps/flux-operator
   prune: true
   wait: true

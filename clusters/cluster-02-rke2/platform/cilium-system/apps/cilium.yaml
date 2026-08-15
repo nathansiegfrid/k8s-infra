@@ -12,9 +12,6 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./platform/cilium
+  path: ./apps/cilium
   prune: true
   wait: true
-
-  dependsOn:
-    - name: platform-rbac-cilium-system

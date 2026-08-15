@@ -1,29 +1,19 @@
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
+apiVersion: v1
+kind: ServiceAccount
 metadata:
-  name: platform-rbac-cilium-system
-  namespace: flux-system
-spec:
-  serviceAccountName: kustomize-controller
-  targetNamespace: cilium-system
-  interval: 10m
-  timeout: 5m
+  name: cluster-reconciler
+  namespace: _
 
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-  path: ./base/platform-rbac
-  prune: true
-  wait: true
-
-  # Allow privileged Pod Security for Cilium.
-  patches:
-    - patch: |
-        apiVersion: v1
-        kind: Namespace
-        metadata:
-          name: _
-          labels:
-            pod-security.kubernetes.io/enforce: privileged
-            pod-security.kubernetes.io/warn: privileged
-            pod-security.kubernetes.io/audit: privileged
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-reconciler
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+  - kind: ServiceAccount
+    name: cluster-reconciler
+    namespace: _
