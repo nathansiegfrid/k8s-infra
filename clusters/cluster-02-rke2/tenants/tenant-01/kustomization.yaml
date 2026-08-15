@@ -1,0 +1,41 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: tenant-01
+
+resources:
+  - namespace.yaml
+  - rbac.yaml
+  - source.yaml
+  - sync.yaml
+
+replacements:
+  - source:
+      kind: Namespace
+      fieldPath: metadata.name
+    targets:
+      # Set ServiceAccount namespace.
+      - select:
+          kind: ServiceAccount
+          name: tenant-reconciler
+        fieldPaths:
+          - metadata.namespace
+      # Set RoleBinding namespace and subject namespace.
+      - select:
+          kind: RoleBinding
+          name: tenant-reconciler
+        fieldPaths:
+          - metadata.namespace
+          - subjects.[name=tenant-reconciler].namespace
+      # Set GitRepository namespace.
+      - select:
+          kind: GitRepository
+          name: flux
+        fieldPaths:
+          - metadata.namespace
+      # Set Flux Kustomization namespace.
+      - select:
+          kind: Kustomization
+          name: flux
+        fieldPaths:
+          - metadata.namespace
+          - spec.targetNamespace
