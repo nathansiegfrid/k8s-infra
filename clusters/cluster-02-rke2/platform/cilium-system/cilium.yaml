@@ -1,7 +1,7 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: cilium-system
+  name: cilium
   namespace: flux-system
 spec:
   serviceAccountName: kustomize-controller
@@ -17,4 +17,4 @@ spec:
   wait: true
 
   dependsOn:
-    - name: cilium-system-rbac
+    - name: platform-rbac-cilium-system
