@@ -30,14 +30,14 @@ replacements:
       # Set GitRepository namespace.
       - select:
           kind: GitRepository
-          name: flux
+          name: main
         fieldPaths:
           - metadata.namespace
 
       # Set Flux Kustomization namespace and targetNamespace.
       - select:
           kind: Kustomization
-          name: flux
+          name: main
         fieldPaths:
           - metadata.namespace
           - spec.targetNamespace
