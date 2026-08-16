@@ -25,7 +25,7 @@ replacements:
           - subjects.[name=cluster-reconciler].namespace
 
       # Change ClusterRoleBinding name to "cluster-reconciler-${namespace}".
-      # ClusterRoleBinding is cluster-scope so its name must be unique.
+      # ClusterRoleBinding is cluster-scoped so its name must be unique.
       - select:
           kind: ClusterRoleBinding
           name: cluster-reconciler
