@@ -76,14 +76,6 @@ spec:
     matchLabels:
       node-role.kubernetes.io/control-plane: "true"
   ingress:
-    # Allow RKE2 supervisor API on WireGuard network.
-    - fromCIDR:
-        - 10.0.0.0/24
-      toPorts:
-        - ports:
-            - port: "9345"
-              protocol: TCP
-
     # Allow Kubernetes API from within cluster.
     - fromEntities:
         - cluster
@@ -94,21 +86,31 @@ spec:
 
     # Allow RKE2 supervisor API for node bootstrapping and management.
     - fromEntities:
-        - init
         - host
         - remote-node
       toPorts:
         - ports:
             - port: "9345"
               protocol: TCP
+    - fromCIDR:
+        - 10.0.0.0/24
+      toPorts:
+        - ports:
+            - port: "9345"
+              protocol: TCP
 
     # Allow etcd client/peer ports only between master nodes.
-    - fromNodes:
-        - matchLabels:
-            node-role.kubernetes.io/control-plane: "true"
+    - fromEntities:
+        - host
       toPorts:
         - ports:
             - port: "2379"
               protocol: TCP
+    - fromCIDR:
+        - 10.0.0.1/32
+        - 10.0.0.2/32
+        - 10.0.0.3/32
+      toPorts:
+        - ports:
             - port: "2380"
               protocol: TCP
