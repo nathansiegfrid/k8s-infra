@@ -16,4 +16,4 @@ spec:
 
   dependsOn:
     - name: platform
-    - name: policies
+    # - name: policies
