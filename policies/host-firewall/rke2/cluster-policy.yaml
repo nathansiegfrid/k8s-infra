@@ -4,6 +4,9 @@
 # Required RKE2 ports:
 # https://docs.rke2.io/install/requirements#inbound-network-rules
 #
+# Required Istio ports:
+# https://istio.io/latest/docs/ops/deployment/application-requirements/#ports-used-by-istio
+#
 # List of Cilium entities:
 # https://docs.cilium.io/en/latest/security/policy/layer3/#entities-based
 
@@ -74,7 +77,11 @@ spec:
         - ports:
             - port: "15008" # HBONE mTLS tunnel (ztunnel)
               protocol: TCP
+            - port: "15020" # Merged Prometheus telemetry from ztunnel/agent
+              protocol: TCP
             - port: "15021" # Istio health check endpoint
+              protocol: TCP
+            - port: "15090" # Envoy Prometheus telemetry
               protocol: TCP
 
     # Allow istiod control plane from within cluster.
@@ -82,7 +89,9 @@ spec:
         - cluster
       toPorts:
         - ports:
-            - port: "15012" # Istiod XDS (mTLS gRPC)
+            - port: "15010" # Istiod XDS plaintext gRPC
+              protocol: TCP
+            - port: "15012" # Istiod XDS mTLS gRPC
               protocol: TCP
             - port: "15014" # Istiod control plane metrics
               protocol: TCP
