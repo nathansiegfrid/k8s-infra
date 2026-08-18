@@ -66,6 +66,29 @@ spec:
             - port: "51871" # Cilium CNI with WireGuard
               protocol: UDP
 
+    # Allow Istio ambient mesh (ztunnel) node-to-node traffic.
+    - fromEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "15008" # HBONE mTLS tunnel (ztunnel)
+              protocol: TCP
+            - port: "15021" # Istio health check endpoint
+              protocol: TCP
+
+    # Allow istiod control plane from within cluster.
+    - fromEntities:
+        - cluster
+      toPorts:
+        - ports:
+            - port: "15012" # Istiod XDS (mTLS gRPC)
+              protocol: TCP
+            - port: "15014" # Istiod control plane metrics
+              protocol: TCP
+            - port: "15017" # Istio webhook server
+              protocol: TCP
+
 ---
 apiVersion: cilium.io/v2
 kind: CiliumClusterwideNetworkPolicy
