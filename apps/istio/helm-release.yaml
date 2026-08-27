@@ -93,3 +93,5 @@ spec:
       sourceRef:
         kind: HelmRepository
         name: istio
+  values:
+    revision: 1-30-3
