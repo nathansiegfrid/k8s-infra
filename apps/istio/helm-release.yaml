@@ -21,13 +21,13 @@ spec:
   upgrade:
     crds: CreateReplace
   values:
-    defaultRevision: default
+    defaultRevision: 1-30-3
 
 ---
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: istiod
+  name: istiod-1-30-3
   namespace: istio-system
 spec:
   serviceAccountName: cluster-reconciler
@@ -45,6 +45,7 @@ spec:
         kind: HelmRepository
         name: istio
   values:
+    revision: 1-30-3
     profile: ambient
 
 ---
@@ -59,7 +60,7 @@ spec:
   timeout: 5m
 
   dependsOn:
-    - name: istiod
+    - name: istiod-1-30-3
 
   chart:
     spec:
