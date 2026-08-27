@@ -10,6 +10,7 @@ spec:
   timeout: 5m
 
   dependsOn:
+    - name: cilium
     - name: gateway-api-crds
 
   sourceRef:
