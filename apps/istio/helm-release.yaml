@@ -27,7 +27,7 @@ spec:
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: istiod-1-30-3
+  name: istio-cni
   namespace: istio-system
 spec:
   serviceAccountName: cluster-reconciler
@@ -36,6 +36,30 @@ spec:
 
   dependsOn:
     - name: istio-base
+
+  chart:
+    spec:
+      chart: cni
+      version: "1.30.3"
+      sourceRef:
+        kind: HelmRepository
+        name: istio
+  values:
+    profile: ambient
+
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: istiod-1-30-3
+  namespace: istio-system
+spec:
+  serviceAccountName: cluster-reconciler
+  interval: 1h
+  timeout: 5m
+
+  dependsOn:
+    - name: istio-cni
 
   chart:
     spec:
@@ -52,30 +76,6 @@ spec:
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: istio-cni
-  namespace: istio-system
-spec:
-  serviceAccountName: cluster-reconciler
-  interval: 1h
-  timeout: 5m
-
-  dependsOn:
-    - name: istiod-1-30-3
-
-  chart:
-    spec:
-      chart: cni
-      version: "1.30.3"
-      sourceRef:
-        kind: HelmRepository
-        name: istio
-  values:
-    profile: ambient
-
----
-apiVersion: helm.toolkit.fluxcd.io/v2
-kind: HelmRelease
-metadata:
   name: ztunnel
   namespace: istio-system
 spec:
@@ -84,7 +84,7 @@ spec:
   timeout: 5m
 
   dependsOn:
-    - name: istio-cni
+    - name: istiod-1-30-3
 
   chart:
     spec:
