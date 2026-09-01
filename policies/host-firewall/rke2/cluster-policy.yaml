@@ -138,11 +138,17 @@ spec:
         - ports:
             - port: "2379"
               protocol: TCP
+        - ports:
+            - port: "2380"
+              protocol: TCP
     - fromCIDR:
         - 10.0.0.1/32
         - 10.0.0.2/32
         - 10.0.0.3/32
       toPorts:
+        - ports:
+            - port: "2379"
+              protocol: TCP
         - ports:
             - port: "2380"
               protocol: TCP
