@@ -124,31 +124,28 @@ spec:
         - ports:
             - port: "9345"
               protocol: TCP
+
+    # Allow etcd client/peer ports between master nodes.
+    - fromEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "2379"
+              protocol: TCP
+            - port: "2380"
+              protocol: TCP
+
+    # Allow master node ports on WireGuard network.
     - fromCIDR:
         - 10.0.0.0/24
       toPorts:
         - ports:
-            - port: "9345"
+            - port: "2379" # etcd client
               protocol: TCP
-
-    # Allow etcd client/peer ports only between master nodes.
-    - fromEntities:
-        - host
-      toPorts:
-        - ports:
-            - port: "2379"
+            - port: "2380" # etcd peer
               protocol: TCP
-        - ports:
-            - port: "2380"
+            - port: "6443" # Kubernetes API server
               protocol: TCP
-    - fromCIDR:
-        - 10.0.0.1/32
-        - 10.0.0.2/32
-        - 10.0.0.3/32
-      toPorts:
-        - ports:
-            - port: "2379"
-              protocol: TCP
-        - ports:
-            - port: "2380"
+            - port: "9345" # RKE2 supervisor API
               protocol: TCP
