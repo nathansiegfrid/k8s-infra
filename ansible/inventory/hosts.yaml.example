@@ -1,16 +1,15 @@
 ---
-k8s_nodes:
-  children:
-    k8s_master_nodes:
-    k8s_worker_nodes:
-
+all:
   vars:
     ssh_default_user: root
     ssh_user: non_root_superuser
     ssh_public_key: "ssh-ed25519 AAAA..."
 
-k8s_new_nodes:
-  # TODO: Change this after initializing the cluster
+new_nodes:
+  children:
+    k8s_nodes:
+
+k8s_nodes:
   children:
     k8s_master_nodes:
     k8s_worker_nodes:

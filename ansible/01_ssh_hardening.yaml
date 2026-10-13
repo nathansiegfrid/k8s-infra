@@ -3,7 +3,7 @@
 # Disable root login, only allow public key auth.
 
 - name: Harden SSH access
-  hosts: k8s_new_nodes
+  hosts: new_nodes
   gather_facts: false
   become: true
 
