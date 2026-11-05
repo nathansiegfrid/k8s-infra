@@ -3,13 +3,19 @@
 connection_timeout: 10
 
 # How each login is tried: plain ssh from this machine. It never prompts
-# (BatchMode), and trusts a new host's key the way ansible.cfg does.
+# (BatchMode), and trusts a new host's key the way ansible.cfg does. A login
+# that stalls after authentication fails after two unanswered keepalives,
+# instead of hanging the run.
 connection_ssh:
   - ssh
   - -o
   - BatchMode=yes
   - -o
   - ConnectTimeout={{ connection_timeout }}
+  - -o
+  - ServerAliveInterval=5
+  - -o
+  - ServerAliveCountMax=2
   - -o
   - StrictHostKeyChecking=accept-new
   - -p
