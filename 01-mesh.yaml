@@ -17,9 +17,12 @@
     - admin_user
     - ssh_hardening
 
+# Each node's config needs every other node's public key, so one node
+# failing stops them all, at that node's own error.
 - name: Build the WireGuard mesh
   hosts: k8s_nodes
   become: true
+  any_errors_fatal: true
   roles:
     - wireguard
 

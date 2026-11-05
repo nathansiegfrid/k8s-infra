@@ -6,6 +6,23 @@
 # Each node's private key is generated on the node and never leaves it:
 # wg-quick loads it from disk, and Ansible only reads the public key.
 
+# Every node's config lists every other node, by the public key this role
+# reads in the same run. A node missing from the run would leave the others
+# without its key.
+- name: Assert every node is in this run
+  ansible.builtin.assert:
+    that:
+      - wireguard_missing_nodes | length == 0
+    fail_msg: >-
+      The mesh needs every host in k8s_nodes in the same run. Missing:
+      {{ wireguard_missing_nodes | join(', ') }}. They failed earlier in this
+      run, or --limit left them out.
+    quiet: true
+  vars:
+    wireguard_missing_nodes: "{{ groups['k8s_nodes'] | difference(ansible_play_hosts) }}"
+  run_once: true
+  any_errors_fatal: true
+
 - name: Install WireGuard
   ansible.builtin.apt:
     name:
