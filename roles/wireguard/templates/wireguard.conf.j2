@@ -6,9 +6,9 @@ Address = {{ node_private_ip }}/24
 ListenPort = {{ wireguard_port }}
 MTU = {{ wireguard_mtu }}
 
-# The private key stays in its own file on this node.
-PreUp = wg set %i private-key {{ wireguard_dir }}/private.key
-
+# The private key stays in its own file on this node. PostUp, because on
+# Linux wg-quick runs PreUp before it creates the interface.
+PostUp = wg set %i private-key {{ wireguard_dir }}/private.key
 PostUp = /usr/sbin/iptables -A FORWARD -i %i -j ACCEPT; /usr/sbin/iptables -A FORWARD -o %i -j ACCEPT
 PostDown = /usr/sbin/iptables -D FORWARD -i %i -j ACCEPT; /usr/sbin/iptables -D FORWARD -o %i -j ACCEPT
 
