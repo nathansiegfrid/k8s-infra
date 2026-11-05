@@ -1,0 +1,6 @@
+---
+# The rest of the settings are role defaults; secrets are in
+# secrets.sops.yaml.
+
+# 51820 is often blocked between providers.
+wireguard_port: 41820

@@ -4,11 +4,13 @@
 [Interface]
 Address = {{ node_private_ip }}/24
 ListenPort = {{ wireguard_port }}
-PrivateKey = {{ wireguard_private_key }}
 MTU = {{ wireguard_mtu }}
 
-PostUp = /usr/sbin/iptables -A FORWARD -i {{ wireguard_interface }} -j ACCEPT; /usr/sbin/iptables -A FORWARD -o {{ wireguard_interface }} -j ACCEPT
-PostDown = /usr/sbin/iptables -D FORWARD -i {{ wireguard_interface }} -j ACCEPT; /usr/sbin/iptables -D FORWARD -o {{ wireguard_interface }} -j ACCEPT
+# The private key stays in its own file on this node.
+PreUp = wg set %i private-key {{ wireguard_dir }}/private.key
+
+PostUp = /usr/sbin/iptables -A FORWARD -i %i -j ACCEPT; /usr/sbin/iptables -A FORWARD -o %i -j ACCEPT
+PostDown = /usr/sbin/iptables -D FORWARD -i %i -j ACCEPT; /usr/sbin/iptables -D FORWARD -o %i -j ACCEPT
 
 {% for host in groups['k8s_nodes'] %}
 {% if host != inventory_hostname %}
@@ -21,7 +23,7 @@ PersistentKeepalive = {{ wireguard_persistent_keepalive }}
 
 {% endif %}
 {% endfor %}
-{% for peer in wireguard_extra_peers | default([]) %}
+{% for peer in wireguard_extra_peers %}
 # {{ peer.name }}
 [Peer]
 PublicKey = {{ peer.public_key }}

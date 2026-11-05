@@ -1,6 +1,8 @@
 ---
-# Secure every host: one admin user with key auth and passwordless sudo, then
-# hardened SSH. Safe to re-run.
+# Secure every host and build the WireGuard mesh. Safe to re-run.
+#
+# When it finishes, import any new client config from generated/, and check
+# that this machine reaches every node over WireGuard.
 
 - name: Work out how to reach each host
   hosts: all
@@ -14,3 +16,29 @@
   roles:
     - admin_user
     - ssh_hardening
+
+- name: Build the WireGuard mesh
+  hosts: k8s_nodes
+  become: true
+  roles:
+    - wireguard
+
+- name: Check this machine is on the mesh
+  hosts: k8s_nodes
+  gather_facts: false
+  tasks:
+    - name: Check each node over WireGuard
+      ansible.builtin.import_role:
+        name: connection
+        tasks_from: mesh
+      vars:
+        connection_mesh_required: false
+
+    - name: Say what to do next
+      ansible.builtin.debug:
+        msg: >-
+          {{ 'Not reachable over WireGuard from this machine: ' ~ connection_off_mesh | join(', ')
+             ~ '. Import the client config from generated/, then check the connection.'
+             if connection_off_mesh
+             else 'This machine reaches every node over WireGuard.' }}
+      run_once: true # noqa: run-once[task]

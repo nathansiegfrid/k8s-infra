@@ -14,3 +14,7 @@ connection_ssh:
   - StrictHostKeyChecking=accept-new
   - -p
   - "{{ hostvars[inventory_hostname].ansible_port | default(22) }}"
+
+# With `tasks_from: mesh`, stop the run when this machine can't reach a node
+# over WireGuard. Set to false to only list those nodes.
+connection_mesh_required: true

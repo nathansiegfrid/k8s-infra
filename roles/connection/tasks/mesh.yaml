@@ -1,0 +1,43 @@
+---
+# Check that this machine reaches every node in the play over WireGuard,
+# which is how everything after 01-mesh.yaml connects. Sets
+# connection_off_mesh to the nodes that didn't answer. With
+# connection_mesh_required, a non-empty list stops the run.
+#
+# Runs entirely on this machine, so it works before the mesh does.
+
+- name: Try SSH on the node's WireGuard IP from this machine
+  ansible.builtin.wait_for:
+    host: "{{ node_private_ip }}"
+    port: 22
+    timeout: "{{ connection_timeout }}"
+  delegate_to: localhost
+  become: false
+  register: connection_mesh
+  failed_when: false
+
+- name: Record whether the node answered
+  ansible.builtin.set_fact:
+    connection_on_mesh: "{{ connection_mesh.state | default('') == 'started' }}"
+
+- name: List the nodes that didn't answer
+  ansible.builtin.set_fact:
+    connection_off_mesh: >-
+      {{ ansible_play_hosts
+         | map('extract', hostvars)
+         | rejectattr('connection_on_mesh')
+         | map(attribute='inventory_hostname')
+         | list }}
+  run_once: true
+
+- name: Stop until this machine reaches every node
+  ansible.builtin.fail:
+    msg: >-
+      Not reachable over WireGuard from this machine: {{ connection_off_mesh | join(', ') }}.
+      Import the client config from generated/, check the connection, then
+      run this playbook again.
+  when:
+    - connection_mesh_required
+    - connection_off_mesh | length > 0
+  run_once: true
+  any_errors_fatal: true

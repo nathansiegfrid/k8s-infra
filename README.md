@@ -8,33 +8,49 @@ The numbered playbooks in `ansible/` are moving to roles at the root, one featur
 
 | Feature | Where |
 | --- | --- |
-| Admin user and SSH hardening | `01-mesh.yaml` |
-| WireGuard, node baseline, RKE2, kubeconfig, Cilium and Flux | `ansible/`, not migrated yet |
+| Admin user, SSH hardening, WireGuard mesh | `01-mesh.yaml` |
+| Node baseline, RKE2, kubeconfig, Cilium and Flux | `ansible/`, not migrated yet |
 | DNS records | `terraform/`, until k8s-fleet's external-dns replaces it |
 
 ## What it builds
 
 - **An admin user and hardened SSH on every host:** key auth only, no root login, Fail2Ban.
+- **A WireGuard full mesh** between the nodes, which share no private network. Each node's private key is generated on the node and never leaves it. Admin machines join as extra peers.
 
 ## Layout
 
 ```
-01-mesh.yaml        secure every host
+01-mesh.yaml        secure every host and build the WireGuard mesh
 roles/              one role per concern, listed under "Building the cluster"
-inventory/          hosts.yaml (git-ignored)
+inventory/          hosts.yaml (git-ignored), group_vars, and secrets.sops.yaml
+generated/          WireGuard client configs (git-ignored)
 ansible/            the old playbooks, until they're migrated
 terraform/          DNS records, until they move to k8s-fleet
 ```
 
 ## Requirements
 
-On this machine, Ansible and the collections: `ansible-galaxy collection install -r requirements.yaml`.
+On this machine:
+
+- Ansible, plus the collections: `ansible-galaxy collection install -r requirements.yaml`
+- [SOPS](https://getsops.io/) and [age](https://github.com/FiloSottile/age)
+- WireGuard, to join the mesh
 
 The nodes run Ubuntu or Debian.
 
 ## Setup
 
-Copy `inventory/hosts.yaml.example` to `inventory/hosts.yaml` and fill in the real IPs. It's git-ignored.
+1. **Your age key.** Run `age-keygen -o <key file>`. SOPS looks for it at `~/Library/Application Support/sops/age/keys.txt` on macOS, `~/.config/sops/age/keys.txt` on Linux, or wherever `SOPS_AGE_KEY_FILE` points. Put its public key in `.sops.yaml`.
+2. **The inventory.** Copy `inventory/hosts.yaml.example` to `inventory/hosts.yaml` and fill in the real IPs. It's git-ignored.
+3. **The secrets.** Run `sops inventory/group_vars/k8s_nodes/secrets.sops.yaml`; SOPS encrypts the file when you save:
+
+```yaml
+wireguard_extra_peers:
+  - name: laptop
+    public_key: <from `wg pubkey` on the laptop>
+    allowed_ips: 10.0.0.100/32
+    private_key: <optional: the laptop's private key, written into its client config>
+```
 
 ## Building the cluster
 
@@ -42,13 +58,21 @@ Copy `inventory/hosts.yaml.example` to `inventory/hosts.yaml` and fill in the re
 ansible-playbook 01-mesh.yaml
 ```
 
+It ends by listing the nodes this machine can't reach over WireGuard yet. Import this machine's client config from `generated/`, add its private key unless the config already has it, bring the tunnel up, and run `01-mesh.yaml` again to check: it then reports every node reachable.
+
 | Playbook | Role | Hosts | Does |
 | --- | --- | --- | --- |
 | `01-mesh.yaml` | `connection` | all | Finds how to reach each host: over WireGuard, else the public IP, else the provider's default user on a new VPS |
 | | `admin_user`, `ssh_hardening` | all | The admin user with your key and passwordless sudo; Fail2Ban, no root login, keys only |
+| | `wireguard` | `k8s_nodes` | The mesh, and client configs for extra peers in `generated/` |
+| | `connection` (mesh) | `k8s_nodes` | Lists the nodes this machine can't reach over WireGuard yet |
 
-Running it again is safe.
+Running it again is safe. A node already on the mesh gets WireGuard config changes in place, without dropping the tunnel.
+
+### Add an admin machine
+
+Add it to `wireguard_extra_peers` and run `01-mesh.yaml`. Its client config is written to `generated/`, with its private key if the peer has `private_key` set. Otherwise fill the key in on the machine itself.
 
 ## CI
 
-ansible-lint (production profile) runs on every push to `main` and on pull requests. It skips `ansible/` and `terraform/` until they're migrated.
+ansible-lint (production profile) runs without decrypting anything, and skips `ansible/` and `terraform/` until they're migrated. A second job fails if any `*.sops.yaml` file isn't encrypted. Both run on every push to `main` and on pull requests.

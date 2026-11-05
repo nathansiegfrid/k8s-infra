@@ -1,0 +1,104 @@
+---
+# A full WireGuard mesh between all nodes. They live on different providers
+# with no shared private network, so every node talks to every other one
+# through an encrypted tunnel.
+#
+# Each node's private key is generated on the node and never leaves it:
+# wg-quick loads it from disk, and Ansible only reads the public key.
+
+- name: Install WireGuard
+  ansible.builtin.apt:
+    name:
+      - iptables
+      - wireguard
+      - wireguard-tools
+    state: present
+    update_cache: true
+
+- name: Load WireGuard kernel module
+  community.general.modprobe:
+    name: wireguard
+    state: present
+    persistent: present
+
+- name: Create WireGuard config directory
+  ansible.builtin.file:
+    path: "{{ wireguard_dir }}"
+    state: directory
+    mode: "0700"
+
+- name: Generate private key
+  ansible.builtin.shell:
+    cmd: "umask 077 && wg genkey > {{ wireguard_dir }}/private.key"
+    creates: "{{ wireguard_dir }}/private.key"
+
+- name: Derive public key
+  ansible.builtin.shell:
+    cmd: "wg pubkey < {{ wireguard_dir }}/private.key > {{ wireguard_dir }}/public.key"
+    creates: "{{ wireguard_dir }}/public.key"
+
+- name: Read public key
+  ansible.builtin.slurp:
+    src: "{{ wireguard_dir }}/public.key"
+  register: wireguard_public_key_file
+
+- name: Share public key with the other nodes
+  ansible.builtin.set_fact:
+    wireguard_public_key: "{{ wireguard_public_key_file.content | b64decode | trim }}"
+
+- name: Write WireGuard interface config
+  ansible.builtin.template:
+    src: wireguard.conf.j2
+    dest: "{{ wireguard_dir }}/{{ wireguard_interface }}.conf"
+    owner: root
+    group: root
+    mode: "0600"
+  register: wireguard_config
+
+# Restarting the interface would cut an SSH session that runs over it, so
+# a running interface gets config changes in place instead.
+- name: Enable and start WireGuard interface
+  ansible.builtin.systemd_service:
+    name: "wg-quick@{{ wireguard_interface }}"
+    state: "{{ 'started' if ansible_host == node_private_ip else 'restarted' }}"
+    enabled: true
+    daemon_reload: true
+
+# Not a handler: peers must be loaded before the connectivity check below.
+- name: Apply config changes without restarting the interface # noqa: no-handler
+  ansible.builtin.shell:
+    cmd: >-
+      wg syncconf {{ wireguard_interface }} <(wg-quick strip {{ wireguard_interface }})
+      && wg set {{ wireguard_interface }} private-key {{ wireguard_dir }}/private.key
+    executable: /bin/bash
+  changed_when: true
+  when: wireguard_config.changed and ansible_host == node_private_ip
+
+- name: Wait for WireGuard interface to be ready
+  ansible.builtin.command:
+    cmd: "wg show {{ wireguard_interface }}"
+  register: wireguard_status
+  until: wireguard_status.rc == 0
+  retries: 5
+  delay: 3
+  changed_when: false
+
+- name: Ping all peers over WireGuard
+  ansible.builtin.command:
+    cmd: "ping -c 3 -W 5 {{ hostvars[item].node_private_ip }}"
+  loop: "{{ groups['k8s_nodes'] | difference([inventory_hostname]) }}"
+  changed_when: false
+
+- name: Write client configs for extra peers
+  ansible.builtin.template:
+    src: wireguard-client.conf.j2
+    dest: "{{ wireguard_client_config_dir }}/{{ item.name }} - {{ now(fmt='%Y%m%d') }}.conf"
+    mode: "0600"
+  # A config can hold the peer's private key: keep it out of --diff output.
+  diff: false
+  delegate_to: localhost
+  become: false
+  run_once: true # noqa: run-once[task]
+  loop: "{{ wireguard_extra_peers }}"
+  loop_control:
+    label: "{{ item.name }}"

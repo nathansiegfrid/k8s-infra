@@ -1,0 +1,4 @@
+# Secrets here are encrypted for this age key only.
+creation_rules:
+  - path_regex: \.sops\.ya?ml$
+    age: age14ffhzy8v4ed9kr0fertclh3tvevppa7ygxl5gkep8h7w8ys8ny3scnsqsf

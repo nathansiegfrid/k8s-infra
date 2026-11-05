@@ -8,6 +8,9 @@ on:
 jobs:
   ansible:
     runs-on: ubuntu-latest
+    env:
+      # Lint without decrypting secrets.sops.yaml: CI has no age key.
+      ANSIBLE_VARS_ENABLED: host_group_vars
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -21,3 +24,19 @@ jobs:
 
       - name: Lint
         run: ansible-lint
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check every *.sops.yaml is encrypted
+        run: |
+          status=0
+          for file in $(git ls-files '*.sops.yaml' ':!:.sops.yaml'); do
+            if ! grep -q '^sops:' "$file" || ! grep -q 'ENC\[' "$file"; then
+              echo "not encrypted: $file"
+              status=1
+            fi
+          done
+          exit "$status"
