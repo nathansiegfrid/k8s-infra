@@ -24,10 +24,13 @@
     state: started
     enabled: true
 
+# sshd keeps the first value it reads for each setting, and reads the
+# drop-ins in name order. 00- loads before a provider's own drop-ins, such
+# as cloud-init's 50-cloud-init.conf with `PasswordAuthentication yes`.
 - name: Harden SSH daemon configuration
   ansible.builtin.template:
     src: sshd-hardening.conf.j2
-    dest: /etc/ssh/sshd_config.d/99-ansible.conf
+    dest: /etc/ssh/sshd_config.d/00-hardening.conf
     owner: root
     group: root
     mode: "0600"
@@ -41,3 +44,22 @@
     regexp: '^(AcceptEnv\s+.*)$'
     replace: '#\1'
   notify: Restart SSH
+
+# `sshd -T` prints the settings sshd will use, from every file it reads. It
+# also fails on a broken config, before the handler restarts SSH with it.
+- name: Read the effective SSH settings
+  ansible.builtin.command:
+    cmd: /usr/sbin/sshd -T
+  register: ssh_hardening_effective
+  changed_when: false
+
+- name: Assert root and password login are off
+  ansible.builtin.assert:
+    that:
+      - "'permitrootlogin no' in ssh_hardening_effective.stdout_lines"
+      - "'passwordauthentication no' in ssh_hardening_effective.stdout_lines"
+    fail_msg: >-
+      sshd still allows root or password login. Another file in
+      /etc/ssh/sshd_config.d/ sorts before 00-hardening.conf, or sshd_config
+      sets it before the Include line.
+    success_msg: "Root login and password login are off."
