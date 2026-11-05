@@ -1,0 +1,45 @@
+---
+# Work out how to reach this host on this run, so 01-mesh.yaml works the
+# same on a new VPS and on a running cluster. The first of these that answers:
+#
+#   1. WireGuard, as the admin user: a node that's already set up
+#   2. the public IP, as the admin user: before WireGuard, or outside the cluster
+#   3. the public IP, as the provider's default user: a new VPS
+#
+# Attempts that fail print an UNREACHABLE error; that's expected here.
+
+- name: Try WireGuard as the admin user
+  ansible.builtin.ping:
+  vars:
+    ansible_host: "{{ node_private_ip }}"
+    ansible_user: "{{ ssh_user }}"
+    ansible_ssh_timeout: "{{ connection_timeout }}"
+  register: connection_wireguard
+  ignore_unreachable: true
+  when: node_private_ip is defined
+
+- name: Try the public IP as the admin user
+  ansible.builtin.ping:
+  vars:
+    ansible_host: "{{ node_public_ip }}"
+    ansible_user: "{{ ssh_user }}"
+    ansible_ssh_timeout: "{{ connection_timeout }}"
+  register: connection_public
+  ignore_unreachable: true
+  when: connection_wireguard is skipped or connection_wireguard is unreachable
+
+- name: Use the first connection that answered
+  ansible.builtin.set_fact:
+    ansible_host: >-
+      {{ node_private_ip
+         if connection_wireguard is not skipped and connection_wireguard is reachable
+         else node_public_ip }}
+    ansible_user: >-
+      {{ ssh_user
+         if (connection_wireguard is not skipped and connection_wireguard is reachable)
+         or (connection_public is not skipped and connection_public is reachable)
+         else ssh_default_user }}
+
+- name: Show the connection
+  ansible.builtin.debug:
+    msg: "{{ ansible_user }}@{{ ansible_host }}"

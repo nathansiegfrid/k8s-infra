@@ -1,0 +1,23 @@
+name: lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ansible:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install ansible-lint and collections
+        run: |
+          pip install ansible-lint
+          ansible-galaxy collection install -r requirements.yaml
+
+      - name: Lint
+        run: ansible-lint

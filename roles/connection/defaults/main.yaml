@@ -1,0 +1,3 @@
+---
+# Seconds to wait for each connection attempt.
+connection_timeout: 10

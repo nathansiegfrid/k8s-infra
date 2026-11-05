@@ -1,0 +1,5 @@
+---
+exclude_paths:
+  # Not migrated yet. Each goes once its last file has moved to the root.
+  - ansible/
+  - terraform/

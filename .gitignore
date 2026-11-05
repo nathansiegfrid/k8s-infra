@@ -1,7 +1,5 @@
-# Inventory files (contains real IPs and sensitive variables)
-inventory/*.yaml
-inventory/*.yml
-
+# Real IPs. See inventory/hosts.yaml.example.
+inventory/hosts.yaml
 
 # https://github.com/github/gitignore/blob/main/Global/Ansible.gitignore
 

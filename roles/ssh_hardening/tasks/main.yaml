@@ -1,0 +1,43 @@
+---
+# Fail2Ban against brute-force attempts; no root login, keys only.
+
+- name: Install Fail2Ban
+  ansible.builtin.apt:
+    name:
+      - python3-systemd # Fail2Ban's systemd backend
+      - fail2ban
+    state: present
+    update_cache: true
+
+- name: Write Fail2Ban SSH jail config
+  ansible.builtin.copy:
+    src: fail2ban-ssh.local
+    dest: /etc/fail2ban/jail.d/ssh.local
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Fail2Ban
+
+- name: Enable and start Fail2Ban
+  ansible.builtin.systemd_service:
+    name: fail2ban
+    state: started
+    enabled: true
+
+- name: Harden SSH daemon configuration
+  ansible.builtin.template:
+    src: sshd-hardening.conf.j2
+    dest: /etc/ssh/sshd_config.d/99-ansible.conf
+    owner: root
+    group: root
+    mode: "0600"
+  notify: Restart SSH
+
+# Fix warning when starting SSH from macOS terminals.
+# -bash: warning: setlocale: LC_CTYPE: cannot change locale (UTF-8): No such file or directory
+- name: Disable AcceptEnv in main sshd_config
+  ansible.builtin.replace:
+    path: /etc/ssh/sshd_config
+    regexp: '^(AcceptEnv\s+.*)$'
+    replace: '#\1'
+  notify: Restart SSH

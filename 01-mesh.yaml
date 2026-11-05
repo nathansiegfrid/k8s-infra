@@ -1,0 +1,16 @@
+---
+# Secure every host: one admin user with key auth and passwordless sudo, then
+# hardened SSH. Safe to re-run.
+
+- name: Work out how to reach each host
+  hosts: all
+  gather_facts: false
+  roles:
+    - connection
+
+- name: Secure SSH access
+  hosts: all
+  become: true
+  roles:
+    - admin_user
+    - ssh_hardening

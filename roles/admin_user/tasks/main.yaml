@@ -1,0 +1,30 @@
+---
+# Each provider ships a different default user (root, ubuntu, ...). Create
+# one admin user on every host, with key auth and passwordless sudo.
+
+- name: Create admin user
+  ansible.builtin.user:
+    name: "{{ ssh_user }}"
+    shell: /bin/bash
+    groups: sudo
+    append: true
+
+- name: Authorize SSH public key
+  ansible.posix.authorized_key:
+    user: "{{ ssh_user }}"
+    key: "{{ ssh_public_key }}"
+
+- name: Grant passwordless sudo
+  ansible.builtin.copy:
+    content: "{{ ssh_user }} ALL=(ALL) NOPASSWD:ALL\n"
+    dest: "/etc/sudoers.d/{{ ssh_user }}"
+    owner: root
+    group: root
+    mode: "0440"
+    # A broken sudoers file can lock everyone out of the server.
+    validate: visudo -cf %s
+
+# Root login is disabled next, so connect as the admin user from here on.
+- name: Switch to the admin user
+  ansible.builtin.set_fact:
+    ansible_user: "{{ ssh_user }}"
