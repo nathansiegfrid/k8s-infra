@@ -1,43 +1,73 @@
 ---
 # Work out how to reach this host on this run, so 01-mesh.yaml works the
-# same on a new VPS and on a running cluster. The first of these that answers:
+# same on a new VPS and on a running cluster. Tries each of these in order
+# and uses the first that connects:
 #
 #   1. WireGuard, as the admin user: a node that's already set up
 #   2. the public IP, as the admin user: before WireGuard, or outside the cluster
 #   3. the public IP, as the provider's default user: a new VPS
 #
-# Attempts that fail print an UNREACHABLE error; that's expected here.
+# Each try is plain ssh from this machine (connection_ssh), so a login that
+# doesn't work is an ordinary result, not an UNREACHABLE error. When none
+# works, the host fails here with ssh's own error for each try.
 
 - name: Try WireGuard as the admin user
-  ansible.builtin.ping:
-  vars:
-    ansible_host: "{{ node_private_ip }}"
-    ansible_user: "{{ ssh_user }}"
-    ansible_ssh_timeout: "{{ connection_timeout }}"
+  ansible.builtin.command:
+    argv: "{{ connection_ssh + [ssh_user ~ '@' ~ node_private_ip, 'true'] }}"
+  delegate_to: localhost
   register: connection_wireguard
-  ignore_unreachable: true
+  changed_when: false
+  failed_when: false
   when: node_private_ip is defined
 
 - name: Try the public IP as the admin user
-  ansible.builtin.ping:
-  vars:
-    ansible_host: "{{ node_public_ip }}"
-    ansible_user: "{{ ssh_user }}"
-    ansible_ssh_timeout: "{{ connection_timeout }}"
+  ansible.builtin.command:
+    argv: "{{ connection_ssh + [ssh_user ~ '@' ~ node_public_ip, 'true'] }}"
+  delegate_to: localhost
   register: connection_public
-  ignore_unreachable: true
-  when: connection_wireguard is skipped or connection_wireguard is unreachable
+  changed_when: false
+  failed_when: false
+  when: connection_wireguard.rc | default(1) != 0
 
-- name: Use the first connection that answered
+- name: Try the public IP as the provider's default user
+  ansible.builtin.command:
+    argv: "{{ connection_ssh + [ssh_default_user ~ '@' ~ node_public_ip, 'true'] }}"
+  delegate_to: localhost
+  register: connection_default
+  changed_when: false
+  failed_when: false
+  when: connection_public.rc | default(0) != 0
+
+- name: Stop if no login works
+  ansible.builtin.fail:
+    msg: >-
+      No login works on {{ inventory_hostname }}.
+      {{ connection_errors | join('; ') }}. Check its IPs and users in the
+      inventory, and whether this machine is on the WireGuard mesh.
+  vars:
+    connection_logins: >-
+      {{ ([ssh_user ~ '@' ~ node_private_ip ~ ' (WireGuard)'] if node_private_ip is defined else [])
+         + [ssh_user ~ '@' ~ node_public_ip, ssh_default_user ~ '@' ~ node_public_ip] }}
+    connection_results: >-
+      {{ ([connection_wireguard] if node_private_ip is defined else [])
+         + [connection_public, connection_default] }}
+    # ssh's reason is its last line of stderr, after any host key warning,
+    # without its own "user@host: " prefix and final period.
+    connection_errors: >-
+      {{ connection_logins
+         | zip(connection_results
+               | map(attribute='stderr_lines') | map('last') | map('default', 'no error output')
+               | map('regex_replace', '^\S+@\S+: ', '') | map('regex_replace', '[.]$', ''))
+         | map('join', ': ')
+         | list }}
+  when: connection_default.rc | default(0) != 0
+
+- name: Use the first login that works
   ansible.builtin.set_fact:
-    ansible_host: >-
-      {{ node_private_ip
-         if connection_wireguard is not skipped and connection_wireguard is reachable
-         else node_public_ip }}
+    ansible_host: "{{ node_private_ip if connection_wireguard.rc | default(1) == 0 else node_public_ip }}"
     ansible_user: >-
       {{ ssh_user
-         if (connection_wireguard is not skipped and connection_wireguard is reachable)
-         or (connection_public is not skipped and connection_public is reachable)
+         if connection_wireguard.rc | default(1) == 0 or connection_public.rc | default(1) == 0
          else ssh_default_user }}
 
 - name: Show the connection

@@ -1,3 +1,16 @@
 ---
 # Seconds to wait for each connection attempt.
 connection_timeout: 10
+
+# How each login is tried: plain ssh from this machine. It never prompts
+# (BatchMode), and trusts a new host's key the way ansible.cfg does.
+connection_ssh:
+  - ssh
+  - -o
+  - BatchMode=yes
+  - -o
+  - ConnectTimeout={{ connection_timeout }}
+  - -o
+  - StrictHostKeyChecking=accept-new
+  - -p
+  - "{{ hostvars[inventory_hostname].ansible_port | default(22) }}"
