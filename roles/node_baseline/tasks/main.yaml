@@ -8,11 +8,19 @@
 
 # Fix warning when using sudo on Debian after hostname change.
 # sudo: unable to resolve host master-sg01: Name or service not known
+#
+# The line holds only the hostname, so `hostname -f` returns it.
+# A provider's own 127.0.1.1 line stays: cloud-init with
+# `manage_etc_hosts: localhost` adds it back on every boot if it's gone.
+# Some cloud-init setups also rewrite /etc/hosts at boot, for example
+# turning the space in our line into a tab, so a "changed" here after a
+# reboot is expected.
 - name: Update /etc/hosts with new hostname mapping
   ansible.builtin.lineinfile:
     path: /etc/hosts
-    regexp: '^127\.0\.1\.1\s+'
-    line: "127.0.1.1 localhost.localdomain {{ inventory_hostname }}"
+    regexp: '^127\.0\.1\.1\s+{{ inventory_hostname | regex_escape }}\s*$'
+    line: "127.0.1.1 {{ inventory_hostname }}"
+    insertafter: '^127\.0\.0\.1\s'
     state: present
 
 - name: Set timezone
