@@ -77,7 +77,7 @@ Running them again is safe. A node already on the mesh gets WireGuard config cha
 
 ### Add an admin machine
 
-Add it to `wireguard_extra_peers` and run `01-mesh.yaml`. Its client config is written to `generated/`, with its private key if the peer has `private_key` set. Otherwise fill the key in on the machine itself.
+Add it to `wireguard_extra_peers` and run `01-mesh.yaml`. Its client config is written to `generated/`, with its private key if the peer has `private_key` set. Otherwise fill the key in on the machine itself. The config sends a keepalive every 25 seconds, so a NAT in front of the machine keeps the tunnel open; set `persistent_keepalive` on the peer to change it.
 
 ## CI
 

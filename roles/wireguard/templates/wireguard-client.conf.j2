@@ -5,6 +5,8 @@
 # Add this machine's private key below, or set private_key for this peer in
 # wireguard_extra_peers to have it filled in.
 {% endif %}
+# PersistentKeepalive stops a NAT in front of this machine from closing the
+# tunnel while a long task is quiet.
 
 [Interface]
 PrivateKey = {{ item.private_key | default('<REPLACE_WITH_PRIVATE_KEY>') }}
@@ -16,8 +18,6 @@ Address = {{ item.allowed_ips.split('/')[0] }}/24
 PublicKey = {{ hostvars[host].wireguard_public_key }}
 Endpoint = {{ hostvars[host].node_public_ip }}:{{ wireguard_port }}
 AllowedIPs = {{ hostvars[host].node_private_ip }}/32
-{% if item.persistent_keepalive is defined %}
-PersistentKeepalive = {{ item.persistent_keepalive }}
-{% endif %}
+PersistentKeepalive = {{ item.persistent_keepalive | default(wireguard_persistent_keepalive) }}
 
 {% endfor %}

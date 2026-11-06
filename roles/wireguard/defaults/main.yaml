@@ -10,6 +10,7 @@ wireguard_dir: /etc/wireguard
 #   public_key: "<from `wg pubkey`>"
 #   allowed_ips: 10.0.0.100/32
 #   private_key: "<optional: written into the client config>"
+#   persistent_keepalive: <optional: seconds, 0 for none; defaults to 25>
 wireguard_extra_peers: []
 
 # Where their client configs are written, on this machine.
