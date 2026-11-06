@@ -1,0 +1,3 @@
+---
+node_baseline_ntp_server: pool.ntp.org
+node_baseline_timezone: UTC

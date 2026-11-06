@@ -1,8 +1,8 @@
 ---
-# Secure every host and build the WireGuard mesh. Safe to re-run.
+# Part 1 of 2: secure every host and build the WireGuard mesh. Safe to re-run.
 #
-# When it finishes, import any new client config from generated/, and check
-# that this machine reaches every node over WireGuard.
+# When it finishes, import any new client config from generated/, check that
+# this machine reaches every node over WireGuard, then run 02-cluster.yaml.
 
 - name: Work out how to reach each host
   hosts: all
@@ -41,7 +41,7 @@
       ansible.builtin.debug:
         msg: >-
           {{ 'Not reachable over WireGuard from this machine: ' ~ connection_off_mesh | join(', ')
-             ~ '. Import the client config from generated/, then check the connection.'
+             ~ '. Import the client config from generated/, check the connection, then run 02-cluster.yaml.'
              if connection_off_mesh
-             else 'This machine reaches every node over WireGuard.' }}
+             else 'This machine reaches every node over WireGuard. Next: ansible-playbook 02-cluster.yaml' }}
       run_once: true # noqa: run-once[task]

@@ -1,0 +1,8 @@
+---
+# Connect over WireGuard as the admin user, as every playbook after
+# 01-mesh.yaml does. 01-mesh.yaml works out the right address and user for
+# each host on every run instead (roles/connection).
+ansible_host: "{{ node_private_ip | default(node_public_ip) }}"
+ansible_user: "{{ ssh_user }}"
+
+node_baseline_timezone: Asia/Jakarta

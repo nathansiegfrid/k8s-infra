@@ -9,18 +9,21 @@ The numbered playbooks in `ansible/` are moving to roles at the root, one featur
 | Feature | Where |
 | --- | --- |
 | Admin user, SSH hardening, WireGuard mesh | `01-mesh.yaml` |
-| Node baseline, RKE2, kubeconfig, Cilium and Flux | `ansible/`, not migrated yet |
+| Node baseline | `02-cluster.yaml` |
+| RKE2, kubeconfig, Cilium and Flux | `ansible/`, not migrated yet |
 | DNS records | `terraform/`, until k8s-fleet's external-dns replaces it |
 
 ## What it builds
 
 - **An admin user and hardened SSH on every host:** key auth only, no root login, Fail2Ban.
 - **A WireGuard full mesh** between the nodes, which share no private network. Each node's private key is generated on the node and never leaves it. Admin machines join as extra peers.
+- **Nodes ready for Kubernetes:** hostname, timezone, NTP, swap off, kernel modules and sysctls. The OS is upgraded only before RKE2 is installed.
 
 ## Layout
 
 ```
 01-mesh.yaml        secure every host and build the WireGuard mesh
+02-cluster.yaml     prepare the nodes for Kubernetes, over WireGuard
 roles/              one role per concern, listed under "Building the cluster"
 inventory/          hosts.yaml (git-ignored), group_vars, and secrets.sops.yaml
 generated/          WireGuard client configs (git-ignored)
@@ -56,9 +59,10 @@ wireguard_extra_peers:
 
 ```sh
 ansible-playbook 01-mesh.yaml
+ansible-playbook 02-cluster.yaml
 ```
 
-It ends by listing the nodes this machine can't reach over WireGuard yet. Import this machine's client config from `generated/`, add its private key unless the config already has it, bring the tunnel up, and run `01-mesh.yaml` again to check: it then reports every node reachable.
+Between the two, this machine joins the mesh. `01-mesh.yaml` ends by listing the nodes this machine can't reach over WireGuard yet. Import this machine's client config from `generated/`, add its private key unless the config already has it, and bring the tunnel up. `02-cluster.yaml` connects only over WireGuard, and stops before changing anything if a node doesn't answer.
 
 | Playbook | Role | Hosts | Does |
 | --- | --- | --- | --- |
@@ -66,8 +70,10 @@ It ends by listing the nodes this machine can't reach over WireGuard yet. Import
 | | `admin_user`, `ssh_hardening` | all | The admin user with your key and passwordless sudo; Fail2Ban, no root login, keys only |
 | | `wireguard` | `k8s_nodes` | The mesh, and client configs for extra peers in `generated/` |
 | | `connection` (mesh) | `k8s_nodes` | Lists the nodes this machine can't reach over WireGuard yet |
+| `02-cluster.yaml` | `connection` (mesh) | `k8s_nodes` | Stops the run if this machine can't reach a node over WireGuard |
+| | `node_baseline` | `k8s_nodes` | Hostname, timezone, NTP, swap off, kernel modules and sysctls. Upgrades the OS, and reboots when it asks, only before RKE2 is installed |
 
-Running it again is safe. A node already on the mesh gets WireGuard config changes in place, without dropping the tunnel.
+Running them again is safe. A node already on the mesh gets WireGuard config changes in place, without dropping the tunnel.
 
 ### Add an admin machine
 

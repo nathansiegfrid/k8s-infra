@@ -1,0 +1,22 @@
+---
+# Prepare the nodes for Kubernetes. Run 01-mesh.yaml first. Everything here
+# connects over WireGuard, so the first play stops the run if this machine
+# can't reach a node that way.
+#
+# Safe to re-run: the OS is upgraded, and the node rebooted, only before
+# RKE2 is installed.
+
+- name: Check this machine is on the mesh
+  hosts: k8s_nodes
+  gather_facts: false
+  tasks:
+    - name: Check each node over WireGuard
+      ansible.builtin.import_role:
+        name: connection
+        tasks_from: mesh
+
+- name: Prepare nodes for Kubernetes
+  hosts: k8s_nodes
+  become: true
+  roles:
+    - node_baseline
