@@ -39,6 +39,8 @@
     timeout: 300
   when: inventory_hostname == rke2_first_server
 
+# etcd adds one new member at a time, as a learner, so the other servers
+# join one by one. Starting rke2-server returns once the server is up.
 - name: Start RKE2 service on remaining master nodes
   ansible.builtin.systemd_service:
     name: rke2-server
@@ -48,6 +50,7 @@
   when:
     - rke2_type == 'server'
     - inventory_hostname != rke2_first_server
+  throttle: 1
 
 - name: Wait for API server on remaining master nodes
   ansible.builtin.wait_for:
