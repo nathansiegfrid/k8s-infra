@@ -106,3 +106,5 @@ For an admin machine, add it to `wireguard_extra_peers` and run `01-mesh.yaml`; 
 ## CI
 
 ansible-lint (production profile) runs without decrypting anything, and skips `ansible/` and `terraform/` until they're migrated. A second job fails if any `*.sops.yaml` file isn't encrypted. Both run on every push to `main` and on pull requests.
+
+CI doesn't run the playbooks against real nodes. The manual test cases for that are in [TESTING.md](TESTING.md).
