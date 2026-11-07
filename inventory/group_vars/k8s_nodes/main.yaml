@@ -6,4 +6,4 @@
 wireguard_port: 41820
 
 # Snapshot etcd every 6 hours to S3-compatible storage.
-rke2_etcd_s3: false
+rke2_etcd_s3: true
