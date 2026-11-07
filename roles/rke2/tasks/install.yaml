@@ -69,6 +69,10 @@
     enabled: true
     daemon_reload: true
   when: rke2_type == 'agent'
+  # RKE2 recommends joining agents 50 at a time or fewer to give CPU time
+  # to recover as each node join causes a temporary CPU spike.
+  # https://docs.rke2.io/install/requirements
+  throttle: 50
 
 - name: Include node status
   ansible.builtin.include_tasks: common_node_status.yaml
