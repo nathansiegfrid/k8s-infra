@@ -10,7 +10,7 @@
   tasks:
     - name: Uninstall RKE2
       ansible.builtin.include_role:
-        name: rke2_cis
+        name: rke2
       vars:
         rke2_action: uninstall
 

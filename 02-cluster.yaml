@@ -20,3 +20,13 @@
   become: true
   roles:
     - node_baseline
+
+- name: Install RKE2
+  hosts: k8s_nodes
+  become: true
+  tasks:
+    - name: Install RKE2
+      ansible.builtin.include_role:
+        name: rke2
+      vars:
+        rke2_action: install

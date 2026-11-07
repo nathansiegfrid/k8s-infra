@@ -11,6 +11,6 @@
   tasks:
     - name: Update RKE2 with rolling restart
       ansible.builtin.include_role:
-        name: rke2_cis
+        name: rke2
       vars:
         rke2_action: rolling_update
