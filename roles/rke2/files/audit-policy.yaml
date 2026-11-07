@@ -1,11 +1,16 @@
 # Deployed by Ansible.
 # Do not edit manually, changes will be overwritten.
 #
-# Define how the cluster logs API activity:
-# 1-2. Ignore high-volume read operations.
-# 3. Log access to Secrets/ConfigMaps, but omit the sensitive data itself.
-# 4. Log full data for all state-changing actions (create/update/delete).
-# 5. Log metadata for cases not covered above.
+# Define how the cluster logs API activity. The first rule that matches wins:
+# 1. Ignore high-volume read operations.
+# 2. Ignore Lease updates: every node renews one every 10 seconds, and every
+#    leader election renews its own.
+# 3. Ignore Events, which controllers write constantly.
+# 4. Ignore health checks and metrics.
+# 5. Log access to Secrets, ConfigMaps, TokenRequests and TokenReviews, but
+#    omit their bodies, which hold credentials and tokens.
+# 6. Log full data for all other state-changing actions (create/update/delete).
+# 7. Log metadata for cases not covered above.
 # Omits the 'RequestReceived' stage to prevent duplicate log entries for every call.
 
 apiVersion: audit.k8s.io/v1
@@ -15,13 +20,26 @@ rules:
     verbs: ["get", "list", "watch"]
     resources:
       - group: ""
-        resources: ["events", "endpoints", "services"]
+        resources: ["endpoints", "services"]
+  - level: None
+    verbs: ["update"]
+    resources:
+      - group: "coordination.k8s.io"
+        resources: ["leases"]
+  - level: None
+    resources:
+      - group: ""
+        resources: ["events"]
+      - group: "events.k8s.io"
+        resources: ["events"]
   - level: None
     nonResourceURLs: ["/healthz*", "/readyz*", "/livez*", "/metrics"]
   - level: Metadata
     resources:
       - group: ""
-        resources: ["secrets", "configmaps"]
+        resources: ["secrets", "configmaps", "serviceaccounts/token"]
+      - group: "authentication.k8s.io"
+        resources: ["tokenreviews"]
     omitStages: [RequestReceived]
   - level: RequestResponse
     verbs: ["create", "update", "delete", "patch"]
