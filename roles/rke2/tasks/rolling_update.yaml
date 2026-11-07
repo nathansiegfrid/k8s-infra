@@ -65,6 +65,7 @@
           --ignore-daemonsets
           --delete-emptydir-data
           --force
+          --timeout={{ rke2_drain_timeout }}
       delegate_to: "{{ rke2_first_server }}"
       when: not ansible_check_mode
       register: rke2_drain
@@ -72,7 +73,15 @@
       retries: 3
       delay: 10
       changed_when: true
+      # Reboot anyway: a pod that can't be evicted shouldn't block patching.
       failed_when: false
+
+    - name: Warn when drain did not finish
+      ansible.builtin.debug:
+        msg: "Drain did not finish, rebooting anyway: {{ rke2_drain.stderr_lines | default([''], true) | last }}"
+      when:
+        - not ansible_check_mode
+        - rke2_drain.rc != 0
 
     - name: Reboot
       ansible.builtin.reboot:

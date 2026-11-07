@@ -1,7 +1,7 @@
 ---
 # Entry points, picked with `tasks_from` in the playbooks:
 #
-#   install          install RKE2 and join the nodes to the cluster
+#   install          set up nodes without RKE2 and join them to the cluster
 #   rolling_update   config, OS and RKE2 upgrades, one node at a time (serial: 1)
 #   uninstall        remove RKE2
 #

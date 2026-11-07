@@ -18,7 +18,7 @@ plugins:
       exemptions:
         usernames: []
         runtimeClasses: []
+        # Namespaces that need privileged pods label themselves instead
+        # (cilium-system, istio-system in k8s-fleet).
         namespaces:
           - kube-system
-          - compliance-operator-system
-          - tigera-operator

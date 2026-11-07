@@ -1,21 +1,27 @@
 ---
+# Sets up nodes that don't run RKE2 yet, and leaves running nodes alone:
+# config changes and upgrades go through rolling_update, which drains and
+# reboots one node at a time.
+
 - name: Include preflight checks
   ansible.builtin.include_tasks: common_preflight.yaml
-
-- name: Include config files
-  ansible.builtin.include_tasks: common_config_files.yaml
 
 - name: Check if RKE2 is installed
   ansible.builtin.stat:
     path: /usr/local/bin/rke2
   register: rke2_binary
 
-- name: Include RKE2 install
-  ansible.builtin.include_tasks: common_binary.yaml
+- name: Set up a new node
   when: not rke2_binary.stat.exists
+  block:
+    - name: Include config files
+      ansible.builtin.include_tasks: common_config_files.yaml
 
-- name: Include CIS hardening
-  ansible.builtin.include_tasks: common_cis_hardening.yaml
+    - name: Include RKE2 install
+      ansible.builtin.include_tasks: common_binary.yaml
+
+    - name: Include CIS hardening
+      ansible.builtin.include_tasks: common_cis_hardening.yaml
 
 - name: Start RKE2 service on first master node
   ansible.builtin.systemd_service:

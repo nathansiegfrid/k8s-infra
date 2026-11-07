@@ -1,10 +1,10 @@
 ---
-# Prepare the nodes for Kubernetes. Run 01-mesh.yaml first. Everything here
-# connects over WireGuard, so the first play stops the run if this machine
-# can't reach a node that way.
+# Part 2 of 2: Kubernetes on the nodes. Run 01-mesh.yaml first. Everything
+# here connects over WireGuard, so the first play stops the run if this
+# machine can't reach a node that way.
 #
-# Safe to re-run: the OS is upgraded, and the node rebooted, only before
-# RKE2 is installed.
+# Safe to re-run: it never upgrades, restarts or reboots a node that already
+# runs RKE2. upgrade.yaml does that, one node at a time.
 
 - name: Check this machine is on the mesh
   hosts: k8s_nodes
