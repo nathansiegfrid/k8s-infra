@@ -9,10 +9,10 @@ node-name: {{ inventory_hostname }}
 node-ip: {{ node_private_ip }}
 
 {% if rke2_type == 'server' %}
-token: {{ rke2_server_token }}
-agent-token: {{ rke2_agent_token | default(rke2_server_token) }}
+token: {{ rke2_server_token | to_json }}
+agent-token: {{ rke2_agent_token | default(rke2_server_token, true) | to_json }}
 {% else %}
-token: {{ rke2_agent_token | default(rke2_server_token) }}
+token: {{ rke2_agent_token | default(rke2_server_token, true) | to_json }}
 {% endif %}
 
 {% if inventory_hostname != rke2_first_server %}
@@ -73,10 +73,10 @@ etcd-snapshot-retention: 28
 
 {% if etcd_s3 %}
 etcd-s3: true
-etcd-s3-bucket: "{{ etcd_s3_bucket }}"
-etcd-s3-region: "{{ etcd_s3_region }}"
-etcd-s3-endpoint: "{{ etcd_s3_endpoint }}"
-etcd-s3-access-key: "{{ etcd_s3_access_key }}"
-etcd-s3-secret-key: "{{ etcd_s3_secret_key }}"
+etcd-s3-bucket: {{ etcd_s3_bucket | to_json }}
+etcd-s3-region: {{ etcd_s3_region | to_json }}
+etcd-s3-endpoint: {{ etcd_s3_endpoint | to_json }}
+etcd-s3-access-key: {{ etcd_s3_access_key | to_json }}
+etcd-s3-secret-key: {{ etcd_s3_secret_key | to_json }}
 {% endif %}
 {% endif %}
