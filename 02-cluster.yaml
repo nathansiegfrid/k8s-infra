@@ -26,7 +26,6 @@
   become: true
   tasks:
     - name: Install RKE2
-      ansible.builtin.include_role:
+      ansible.builtin.import_role:
         name: rke2
-      vars:
-        rke2_action: install
+        tasks_from: install

@@ -1,0 +1,17 @@
+---
+- name: Assert at least one RKE2 server exists
+  ansible.builtin.assert:
+    that:
+      - rke2_servers | length > 0
+    fail_msg: "FATAL: No RKE2 servers found. Put at least one host in the '{{ rke2_servers_group }}' group."
+    success_msg: "RKE2 servers found: {{ rke2_servers | join(', ') }}."
+  run_once: true
+
+- name: Assert rke2_server_token is valid
+  ansible.builtin.assert:
+    that:
+      - rke2_server_token is defined
+      - rke2_server_token | length >= 16
+    fail_msg: "FATAL: rke2_server_token must be defined and at least 16 characters long."
+    success_msg: "rke2_server_token is valid."
+  run_once: true

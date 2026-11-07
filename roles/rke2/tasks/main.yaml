@@ -1,22 +1,11 @@
 ---
-- name: Assert at least one RKE2 server exists
-  ansible.builtin.assert:
-    that:
-      - rke2_servers | length > 0
-    fail_msg: "FATAL: No RKE2 servers found. Put at least one host in the '{{ rke2_servers_group }}' group."
-    success_msg: "RKE2 servers found: {{ rke2_servers | join(', ') }}."
-  run_once: true
+# Entry points, picked with `tasks_from` in the playbooks:
+#
+#   install          install RKE2 and join the nodes to the cluster
+#   rolling_update   config, OS and RKE2 upgrades, one node at a time (serial: 1)
+#   uninstall        remove RKE2
+#
+# Without `tasks_from`, the role installs.
 
-- name: Assert rke2_server_token is valid
-  ansible.builtin.assert:
-    that:
-      - rke2_server_token is defined
-      - rke2_server_token | length >= 16
-    fail_msg: "FATAL: rke2_server_token must be defined and at least 16 characters long."
-    success_msg: "rke2_server_token is valid."
-  run_once: true
-
-- name: Execute RKE2 tasks
-  block:
-    - name: Include RKE2 tasks
-      ansible.builtin.include_tasks: "{{ rke2_action | default('install') }}.yaml"
+- name: Include install tasks
+  ansible.builtin.include_tasks: install.yaml

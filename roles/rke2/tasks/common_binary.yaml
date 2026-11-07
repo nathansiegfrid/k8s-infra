@@ -1,0 +1,19 @@
+---
+# Install RKE2 at rke2_version with the official install script. Callers
+# decide when: install.yaml when RKE2 isn't installed, rolling_update.yaml
+# when the running version differs.
+
+- name: Download RKE2 install script
+  ansible.builtin.get_url:
+    url: https://get.rke2.io
+    dest: /var/tmp/rke2.sh
+    mode: "0700"
+
+- name: Run RKE2 install script
+  ansible.builtin.command:
+    cmd: /var/tmp/rke2.sh
+  environment:
+    INSTALL_RKE2_VERSION: "{{ rke2_version }}"
+    INSTALL_RKE2_TYPE: "{{ rke2_type }}"
+  changed_when: true
+  when: not ansible_check_mode

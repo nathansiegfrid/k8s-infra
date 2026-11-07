@@ -9,10 +9,9 @@
 
   tasks:
     - name: Uninstall RKE2
-      ansible.builtin.include_role:
+      ansible.builtin.import_role:
         name: rke2
-      vars:
-        rke2_action: uninstall
+        tasks_from: uninstall
 
     - name: Restart WireGuard interface
       ansible.builtin.systemd_service:

@@ -10,7 +10,6 @@
 
   tasks:
     - name: Update RKE2 with rolling restart
-      ansible.builtin.include_role:
+      ansible.builtin.import_role:
         name: rke2
-      vars:
-        rke2_action: rolling_update
+        tasks_from: rolling_update
