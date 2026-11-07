@@ -1,5 +1,13 @@
 ---
-rke2_type: server
+# Hosts in this group run the RKE2 server (control plane and etcd). Every
+# other host the role runs on is an agent.
+rke2_servers_group: k8s_master_nodes
+rke2_servers: "{{ groups[rke2_servers_group] }}"
+rke2_type: "{{ 'server' if inventory_hostname in rke2_servers else 'agent' }}"
+
+# The first server in the inventory bootstraps the cluster, and the other
+# nodes join through it. etcd restores run on it too.
+rke2_first_server: "{{ rke2_servers | first }}"
 
 rke2_server_token: ""
 rke2_agent_token: ""

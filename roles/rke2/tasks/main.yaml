@@ -1,22 +1,10 @@
 ---
-- name: Get RKE2 server list
-  ansible.builtin.set_fact:
-    rke2_servers: >-
-      {%- set servers = [] -%}
-      {%- for host in groups['all'] | sort -%}
-      {%-   if hostvars[host].get('rke2_type', 'server') == 'server' -%}
-      {%-     set _ = servers.append(host) -%}
-      {%-   endif -%}
-      {%- endfor -%}
-      {{ servers }}
-  run_once: true
-
 - name: Assert at least one RKE2 server exists
   ansible.builtin.assert:
     that:
       - rke2_servers | length > 0
-    fail_msg: "FATAL: No RKE2 servers found in inventory! At least one host must have rke2_type set to 'server'."
-    success_msg: "RKE2 servers found."
+    fail_msg: "FATAL: No RKE2 servers found. Put at least one host in the '{{ rke2_servers_group }}' group."
+    success_msg: "RKE2 servers found: {{ rke2_servers | join(', ') }}."
   run_once: true
 
 - name: Assert rke2_server_token is valid
@@ -26,11 +14,6 @@
       - rke2_server_token | length >= 16
     fail_msg: "FATAL: rke2_server_token must be defined and at least 16 characters long."
     success_msg: "rke2_server_token is valid."
-  run_once: true
-
-- name: Set first RKE2 server
-  ansible.builtin.set_fact:
-    rke2_first_server: "{{ rke2_servers | first }}"
   run_once: true
 
 - name: Execute RKE2 tasks
