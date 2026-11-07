@@ -1,4 +1,7 @@
 ---
+# On a new cluster, nodes stay NotReady until a CNI is installed, so an
+# install accepts a node that has registered. A rolling update sets
+# rke2_node_ready_required: the node has to be Ready again.
 - name: Wait for node to register or become ready
   ansible.builtin.command:
     cmd: >-
@@ -8,7 +11,10 @@
   when: not ansible_check_mode
   delegate_to: "{{ inventory_hostname if rke2_type == 'server' else rke2_first_server }}"
   register: rke2_node_ready
-  until: rke2_node_ready.stdout.startswith('True') or (rke2_cni == 'none' and 'KubeletNotReady' in rke2_node_ready.stdout)
+  until: >-
+    rke2_node_ready.stdout.startswith('True')
+    or (not (rke2_node_ready_required | default(false))
+        and rke2_cni == 'none' and 'KubeletNotReady' in rke2_node_ready.stdout)
   retries: 40
   delay: 15
   changed_when: false

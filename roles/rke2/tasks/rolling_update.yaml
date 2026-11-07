@@ -57,6 +57,19 @@
 - name: Maintenance
   when: rke2_reboot_required | default(false)
   block:
+    # A server's etcd member can still be catching up after its own reboot.
+    # Taking another server down then would leave etcd without quorum.
+    - name: Wait for every etcd member before taking a server down
+      ansible.builtin.command:
+        cmd: >-
+          {{ rke2_bin_dir }}/kubectl --kubeconfig {{ rke2_kubeconfig }}
+          wait pod --namespace kube-system --selector component=etcd
+          --for condition=Ready --timeout 10m
+      when:
+        - rke2_type == 'server'
+        - not ansible_check_mode
+      changed_when: false
+
     - name: Drain node
       ansible.builtin.command:
         cmd: >-
@@ -89,6 +102,8 @@
 
     - name: Include node status
       ansible.builtin.include_tasks: common_node_status.yaml
+      vars:
+        rke2_node_ready_required: true
 
     - name: Uncordon node
       ansible.builtin.command:

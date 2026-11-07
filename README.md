@@ -91,7 +91,7 @@ Running them again is safe. A node already on the mesh gets WireGuard config cha
 
 ### Upgrade RKE2, the OS or RKE2's config
 
-Change `rke2_version` or the RKE2 config, then run `ansible-playbook upgrade.yaml`. It goes one node at a time, masters first. A node is drained and rebooted only when its RKE2 version or config changed, or the OS asks for a reboot. A drain that doesn't finish in `rke2_drain_timeout` (2 minutes, 3 attempts) doesn't block the reboot.
+Change `rke2_version` or the RKE2 config, then run `ansible-playbook upgrade.yaml`. It goes one node at a time, masters first. A node is drained and rebooted only when its RKE2 version or config changed, or the OS asks for a reboot. Before a master goes down, every etcd member has to be Ready, and each node has to be Ready again before the next one starts. A drain that doesn't finish in `rke2_drain_timeout` (2 minutes, 3 attempts) doesn't block the reboot.
 
 ### Add a node or an admin machine
 
