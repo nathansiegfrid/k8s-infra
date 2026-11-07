@@ -3,11 +3,15 @@
 # decide when: install.yaml when RKE2 isn't installed, rolling_update.yaml
 # when the running version differs.
 
+# The script from the rke2_version tag, not get.rke2.io, which serves
+# whatever is on master when the node installs.
 - name: Download RKE2 install script
   ansible.builtin.get_url:
-    url: https://get.rke2.io
+    url: "https://raw.githubusercontent.com/rancher/rke2/{{ rke2_version | urlencode }}/install.sh"
     dest: /var/tmp/rke2.sh
     mode: "0700"
+    # Replace a script left by an earlier version.
+    force: true
 
 - name: Run RKE2 install script
   ansible.builtin.command:
