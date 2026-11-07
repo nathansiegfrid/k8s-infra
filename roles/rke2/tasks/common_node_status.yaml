@@ -7,8 +7,8 @@
       -o 'jsonpath={.status.conditions[?(@.type=="Ready")].status},{.status.conditions[?(@.type=="Ready")].reason}'
   when: not ansible_check_mode
   delegate_to: "{{ inventory_hostname if rke2_type == 'server' else rke2_first_server }}"
-  register: node_ready
-  until: node_ready.stdout.startswith('True') or (rke2_cni == 'none' and 'KubeletNotReady' in node_ready.stdout)
+  register: rke2_node_ready
+  until: rke2_node_ready.stdout.startswith('True') or (rke2_cni == 'none' and 'KubeletNotReady' in rke2_node_ready.stdout)
   retries: 40
   delay: 15
   changed_when: false
@@ -18,11 +18,11 @@
     cmd: "{{ rke2_bin_dir }}/kubectl --kubeconfig {{ rke2_kubeconfig }} get nodes -o wide"
   when: not ansible_check_mode
   delegate_to: "{{ inventory_hostname if rke2_type == 'server' else rke2_first_server }}"
-  register: node_status
+  register: rke2_node_status
   changed_when: false
   run_once: true
 
 - name: Print node status
   ansible.builtin.debug:
-    msg: "{{ node_status.stdout_lines }}"
+    msg: "{{ rke2_node_status.stdout_lines }}"
   run_once: true

@@ -6,8 +6,8 @@
   ansible.builtin.user:
     name: etcd
     shell: /sbin/nologin
-    create_home: no
-    system: yes
+    create_home: false
+    system: true
   when:
     - rke2_type == 'server'
 
@@ -19,11 +19,13 @@
     owner: root
     group: root
     mode: "0644"
-  register: sysctl_config
+  register: rke2_sysctl_config
 
-- name: Restart systemd-sysctl
+# Not a handler: the CIS profile checks these values when RKE2 starts, which
+# is before handlers would run.
+- name: Restart systemd-sysctl # noqa: no-handler
   ansible.builtin.systemd_service:
     name: systemd-sysctl
     state: restarted
   when:
-    - sysctl_config is changed
+    - rke2_sysctl_config is changed

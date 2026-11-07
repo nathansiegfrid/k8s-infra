@@ -10,6 +10,8 @@ rke2_type: "{{ 'server' if inventory_hostname in rke2_servers else 'agent' }}"
 rke2_first_server: "{{ rke2_servers | first }}"
 
 rke2_server_token: ""
+# Agents join with their own token when it's set, so workers never hold the
+# server token.
 rke2_agent_token: ""
 
 # See available versions in https://docs.rke2.io/release-notes/v1.34.X
@@ -31,13 +33,9 @@ rke2_data_dir: /var/lib/rancher/rke2
 rke2_bin_dir: /var/lib/rancher/rke2/bin
 rke2_kubeconfig: /etc/rancher/rke2/rke2.yaml
 
-etcd_s3: false
-etcd_s3_bucket: ""
-etcd_s3_region: ""
-etcd_s3_endpoint: "s3.amazonaws.com"
-etcd_s3_access_key: ""
-etcd_s3_secret_key: ""
-
-etcd_snapshot_name: ""
-etcd_restore_log: /tmp/rke2-restore.log
-etcd_restore_timeout_seconds: 120
+rke2_etcd_s3: false
+rke2_etcd_s3_bucket: ""
+rke2_etcd_s3_region: ""
+rke2_etcd_s3_endpoint: "s3.amazonaws.com"
+rke2_etcd_s3_access_key: ""
+rke2_etcd_s3_secret_key: ""

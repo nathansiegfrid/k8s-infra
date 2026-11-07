@@ -1,6 +1,9 @@
 ---
-# The rest of the settings are role defaults; secrets are in
-# secrets.sops.yaml.
+# The rest of the settings are role defaults. Secrets, including the etcd
+# S3 bucket and credentials, are in secrets.sops.yaml.
 
 # 51820 is often blocked between providers.
 wireguard_port: 41820
+
+# Snapshot etcd every 6 hours to S3-compatible storage.
+rke2_etcd_s3: false

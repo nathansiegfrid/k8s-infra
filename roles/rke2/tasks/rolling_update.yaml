@@ -10,8 +10,8 @@
 - name: Check if OS reports reboot required
   ansible.builtin.stat:
     path: /var/run/reboot-required
-  register: reboot_required_file
-  changed_when: reboot_required_file.stat.exists
+  register: rke2_os_reboot_file
+  changed_when: rke2_os_reboot_file.stat.exists
   notify: Reboot required
 
 - name: Include config files
@@ -34,28 +34,28 @@
     echo "$current_version"
   args:
     executable: /bin/bash
-  register: get_current_version
+  register: rke2_current_version
   changed_when: false
 
 - name: Display current RKE2 version
   ansible.builtin.debug:
-    msg: "{{ get_current_version.stdout }}{{ ' -> ' + rke2_version if get_current_version.stdout != rke2_version else '' }}"
+    msg: "{{ rke2_current_version.stdout }}{{ ' -> ' + rke2_version if rke2_current_version.stdout != rke2_version else '' }}"
 
 - name: Update RKE2
-  when: get_current_version.stdout != rke2_version
+  when: rke2_current_version.stdout != rke2_version
   block:
     - name: Include RKE2 install
       ansible.builtin.include_tasks: common_binary.yaml
 
     - name: Mark node for reboot
       ansible.builtin.set_fact:
-        reboot_required: true
+        rke2_reboot_required: true
 
 - name: Flush handlers
   ansible.builtin.meta: flush_handlers
 
 - name: Maintenance
-  when: reboot_required
+  when: rke2_reboot_required | default(false)
   block:
     - name: Drain node
       ansible.builtin.command:
@@ -67,10 +67,11 @@
           --force
       delegate_to: "{{ rke2_first_server }}"
       when: not ansible_check_mode
-      register: drain_result
-      until: drain_result.rc == 0
+      register: rke2_drain
+      until: rke2_drain.rc == 0
       retries: 3
       delay: 10
+      changed_when: true
       failed_when: false
 
     - name: Reboot

@@ -1,11 +1,9 @@
 ---
-- name: Destroy RKE2 cluster
+# Remove RKE2 from every node. WireGuard and the hosts stay.
+
+- name: Destroy the cluster
   hosts: k8s_nodes
   become: true
-
-  vars:
-    ansible_host: "{{ node_private_ip }}"
-    ansible_user: "{{ ssh_user }}"
 
   tasks:
     - name: Uninstall RKE2
@@ -13,9 +11,10 @@
         name: rke2
         tasks_from: uninstall
 
+    # The uninstall leaves the WireGuard connection broken; a restart restores it.
     - name: Restart WireGuard interface
       ansible.builtin.systemd_service:
-        name: "wg-quick@{{ wireguard_interface }}"
+        name: "wg-quick@{{ wireguard_interface | default('wg0') }}"
         state: restarted
         enabled: true
         daemon_reload: true

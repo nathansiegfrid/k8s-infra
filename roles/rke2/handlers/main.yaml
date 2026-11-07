@@ -1,4 +1,4 @@
 ---
 - name: Reboot required
   ansible.builtin.set_fact:
-    reboot_required: true
+    rke2_reboot_required: true

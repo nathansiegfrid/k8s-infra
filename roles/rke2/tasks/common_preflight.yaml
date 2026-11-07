@@ -10,7 +10,6 @@
 - name: Assert rke2_server_token is valid
   ansible.builtin.assert:
     that:
-      - rke2_server_token is defined
       - rke2_server_token | length >= 16
     fail_msg: "FATAL: rke2_server_token must be defined and at least 16 characters long."
     success_msg: "rke2_server_token is valid."

@@ -1,15 +1,15 @@
 ---
-- name: Update RKE2 with rolling restart
+# Apply RKE2 config changes, and upgrade the OS and RKE2, one node at a time
+# in inventory order: masters first, then workers. A node is drained and
+# rebooted only when something changed.
+
+- name: Upgrade nodes one at a time
   hosts: k8s_nodes
   become: true
   serial: 1
 
-  vars:
-    ansible_host: "{{ node_private_ip }}"
-    ansible_user: "{{ ssh_user }}"
-
   tasks:
-    - name: Update RKE2 with rolling restart
+    - name: Upgrade the node
       ansible.builtin.import_role:
         name: rke2
         tasks_from: rolling_update
