@@ -16,7 +16,6 @@
 
   tasks:
     - name: Restore etcd from S3
-      ansible.builtin.include_role:
+      ansible.builtin.import_role:
         name: rke2
-      vars:
-        rke2_action: etcd_restore
+        tasks_from: etcd_restore

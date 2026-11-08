@@ -1,7 +1,7 @@
 ---
 # Install RKE2 at rke2_version with the official install script. Callers
-# decide when: install.yaml when RKE2 isn't installed, rolling_update.yaml
-# when the running version differs.
+# decide when: install.yaml and etcd_restore.yaml when RKE2 isn't installed,
+# rolling_update.yaml when the running version differs.
 
 # The script from the rke2_version tag, not get.rke2.io, which serves
 # whatever is on master when the node installs.

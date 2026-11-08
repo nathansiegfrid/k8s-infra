@@ -1,4 +1,7 @@
 ---
+- name: Include preflight checks
+  ansible.builtin.include_tasks: common_preflight.yaml
+
 # The other servers join through the first one, so that's where the
 # restored etcd has to be.
 - name: Assert this is the first server
@@ -38,15 +41,14 @@
   ansible.builtin.include_tasks: common_config_files.yaml
   run_once: true
 
-- name: Install RKE2
-  ansible.builtin.shell:
-    cmd: curl -sfL https://get.rke2.io | sh -
-  environment:
-    INSTALL_RKE2_VERSION: "{{ rke2_version }}"
-    INSTALL_RKE2_TYPE: "{{ rke2_type }}"
-  args:
-    creates: /usr/local/bin/rke2
-  run_once: true
+- name: Check if RKE2 is installed
+  ansible.builtin.stat:
+    path: /usr/local/bin/rke2
+  register: rke2_binary
+
+- name: Include RKE2 install
+  ansible.builtin.include_tasks: common_binary.yaml
+  when: not rke2_binary.stat.exists
 
 - name: Include CIS hardening
   ansible.builtin.include_tasks: common_cis_hardening.yaml

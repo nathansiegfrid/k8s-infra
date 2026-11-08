@@ -3,6 +3,7 @@
 #
 #   install          set up nodes without RKE2 and join them to the cluster
 #   rolling_update   config, OS and RKE2 upgrades, one node at a time (serial: 1)
+#   etcd_restore     rebuild the first server from an S3 snapshot
 #   uninstall        remove RKE2
 #
 # Without `tasks_from`, the role installs.
