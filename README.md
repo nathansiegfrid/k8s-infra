@@ -9,8 +9,8 @@ The numbered playbooks in `ansible/` are moving to roles at the root, one featur
 | Feature | Where |
 | --- | --- |
 | Admin user, SSH hardening, WireGuard mesh | `01-mesh.yaml` |
-| Node baseline, RKE2 | `02-cluster.yaml`, `upgrade.yaml`, `destroy.yaml` |
-| etcd restore, kubeconfig, Cilium and Flux | `ansible/`, not migrated yet |
+| Node baseline, RKE2, etcd restore | `02-cluster.yaml`, `upgrade.yaml`, `restore-etcd.yaml`, `destroy.yaml` |
+| Kubeconfig, Cilium and Flux | `ansible/`, not migrated yet |
 | DNS records | `terraform/`, until k8s-fleet's external-dns replaces it |
 
 ## What it builds
@@ -27,6 +27,7 @@ The numbered playbooks in `ansible/` are moving to roles at the root, one featur
 01-mesh.yaml        secure every host and build the WireGuard mesh
 02-cluster.yaml     prepare the nodes and install RKE2, over WireGuard
 upgrade.yaml        RKE2 config, OS and RKE2 upgrades, one node at a time
+restore-etcd.yaml   restore etcd from an S3 snapshot
 destroy.yaml        remove RKE2 from every node
 roles/              one role per concern, listed under "Building the cluster"
 inventory/          hosts.yaml (git-ignored), group_vars, and secrets.sops.yaml
@@ -92,6 +93,14 @@ Running them again is safe. A node already on the mesh gets WireGuard config cha
 ### Upgrade RKE2, the OS or RKE2's config
 
 Change `rke2_version` or the RKE2 config, then run `ansible-playbook upgrade.yaml`. It goes one node at a time, masters first. A node is drained and rebooted only when its RKE2 version or config changed, or the OS asks for a reboot. Before a master goes down, every etcd member has to be Ready, and each node has to be Ready again before the next one starts. A drain that doesn't finish in `rke2_drain_timeout` (2 minutes, 3 attempts) doesn't block the reboot.
+
+### Restore etcd
+
+```sh
+ansible-playbook restore-etcd.yaml -e rke2_etcd_snapshot_name=<snapshot>
+```
+
+The restore runs on the first master, which can be a fresh node with the same WireGuard IP. `rke2 etcd-snapshot list` on a master lists the snapshots. Workers reconnect on their own, and the other masters rejoin as fresh nodes when you build them with `01-mesh.yaml` and `02-cluster.yaml`. A worker that was in the cluster before the restore can show pods stuck in `Pending` or `Terminating`; restarting the worker clears it.
 
 ### Add a node or an admin machine
 
