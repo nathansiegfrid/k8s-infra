@@ -11,6 +11,30 @@
     fail_msg: "Restore on {{ rke2_first_server }}, the first host in '{{ rke2_servers_group }}'."
     success_msg: "Restoring on the first server."
 
+# The other servers mustn't run etcd. Two of three members still have
+# quorum, so they would keep serving the old cluster next to the restored
+# one, and the workers know all three.
+- name: Check whether the other servers run etcd
+  ansible.builtin.wait_for:
+    host: "{{ hostvars[item].node_private_ip }}"
+    port: 2379
+    timeout: 3
+  loop: "{{ rke2_servers | difference([inventory_hostname]) }}"
+  register: rke2_other_etcd
+  failed_when: false
+
+- name: Assert no other server runs etcd
+  ansible.builtin.assert:
+    that:
+      - rke2_etcd_running | length == 0
+    fail_msg: >-
+      etcd answers on {{ rke2_etcd_running | join(', ') }}. On each, stop
+      rke2-server and delete {{ rke2_data_dir }}/server/db, or rebuild the
+      server, then run the restore again.
+    success_msg: "No other server runs etcd."
+  vars:
+    rke2_etcd_running: "{{ rke2_other_etcd.results | selectattr('state', 'defined') | map(attribute='item') | list }}"
+
 - name: Assert rke2_etcd_snapshot_name is provided
   ansible.builtin.assert:
     that:

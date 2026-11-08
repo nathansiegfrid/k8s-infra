@@ -100,7 +100,7 @@ Change `rke2_version` or the RKE2 config, then run `ansible-playbook upgrade.yam
 ansible-playbook restore-etcd.yaml -e rke2_etcd_snapshot_name=<snapshot>
 ```
 
-The restore runs on the first master, which can be a fresh node with the same WireGuard IP. `rke2 etcd-snapshot list` on a master lists the snapshots. Workers reconnect on their own, and the other masters rejoin as fresh nodes when you build them with `01-mesh.yaml` and `02-cluster.yaml`. A worker that was in the cluster before the restore can show pods stuck in `Pending` or `Terminating`; restarting the worker clears it.
+The restore runs on the first master, which can be a fresh node with the same WireGuard IP. `rke2 etcd-snapshot list` on a master lists the snapshots. No other master may run etcd during the restore: stop `rke2-server` on each and delete `/var/lib/rancher/rke2/server/db`, or rebuild them. The playbook stops before changing anything if one answers on port 2379. Afterwards, `02-cluster.yaml` starts the other masters again, and they join the restored cluster; rebuilt ones need `01-mesh.yaml` first. Workers reconnect on their own. A worker that was in the cluster before the restore can show pods stuck in `Pending` or `Terminating`; restarting the worker clears it.
 
 ### Add a node or an admin machine
 

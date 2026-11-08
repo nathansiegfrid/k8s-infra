@@ -1,7 +1,10 @@
 ---
 # Restore etcd from an S3 snapshot onto the first master, which can be a
-# fresh node with the same WireGuard IP. Workers reconnect on their own; the
-# other masters rejoin as fresh nodes with 01-mesh.yaml and 02-cluster.yaml.
+# fresh node with the same WireGuard IP. No other master may run etcd: stop
+# rke2-server and delete its server/db, or rebuild it. Afterwards,
+# 02-cluster.yaml starts the other masters again, and they join the restored
+# cluster; rebuilt ones need 01-mesh.yaml first. Workers reconnect on their
+# own.
 #
 #   ansible-playbook restore-etcd.yaml -e rke2_etcd_snapshot_name=<NAME>
 
