@@ -11,35 +11,30 @@
     fail_msg: "Restore on {{ rke2_first_server }}, the first host in '{{ rke2_servers_group }}'."
     success_msg: "Restoring on the first server."
 
-- name: Assert etcd_snapshot_name is provided
+- name: Assert rke2_etcd_snapshot_name is provided
   ansible.builtin.assert:
     that:
-      - etcd_snapshot_name is defined
-      - etcd_snapshot_name | length > 0
-    fail_msg: "etcd_snapshot_name is required. Please provide it via extra vars (e.g., -e etcd_snapshot_name=<NAME>)."
-    success_msg: "etcd_snapshot_name is defined."
-  run_once: true
+      - rke2_etcd_snapshot_name | length > 0
+    fail_msg: "rke2_etcd_snapshot_name is required. Please provide it via extra vars (e.g., -e rke2_etcd_snapshot_name=<NAME>)."
+    success_msg: "rke2_etcd_snapshot_name is defined."
 
 - name: Confirm restore operation
   ansible.builtin.pause:
     prompt: >-
-      WARNING: This will restore etcd from S3 snapshot '{{ etcd_snapshot_name }}'
+      WARNING: This will restore etcd from S3 snapshot '{{ rke2_etcd_snapshot_name }}'
       on host '{{ inventory_hostname }}' ({{ node_private_ip }}).
       Type 'restore' to proceed
-  register: confirmation
-  run_once: true
+  register: rke2_confirmation
 
 - name: Assert user confirmation
   ansible.builtin.assert:
     that:
-      - confirmation.user_input == "restore"
+      - rke2_confirmation.user_input == "restore"
     fail_msg: "Restore aborted."
     success_msg: "Restore confirmed."
-  run_once: true
 
 - name: Include config files
   ansible.builtin.include_tasks: common_config_files.yaml
-  run_once: true
 
 - name: Check if RKE2 is installed
   ansible.builtin.stat:
@@ -52,7 +47,6 @@
 
 - name: Include CIS hardening
   ansible.builtin.include_tasks: common_cis_hardening.yaml
-  run_once: true
 
 # Why we start RKE2 before restoring:
 # rke2 server --cluster-reset needs to start the etcd static pod immediately
@@ -70,7 +64,6 @@
     state: started
     enabled: true
     daemon_reload: true
-  run_once: true
 
 - name: Wait for API server to be ready before stopping
   ansible.builtin.wait_for:
@@ -78,58 +71,51 @@
     port: 6443
     sleep: 10
     timeout: 300
-  run_once: true
 
 - name: Stop RKE2 server service for restore
   ansible.builtin.systemd_service:
     name: rke2-server
     state: stopped
   failed_when: false
-  run_once: true
 
 - name: Run etcd cluster-reset restore from S3 snapshot
   ansible.builtin.shell:
     cmd: >-
       rke2 server --cluster-reset
-      --cluster-reset-restore-path={{ etcd_snapshot_name | quote }}
-      > {{ etcd_restore_log }} 2>&1
-  register: etcd_restore_result
+      --cluster-reset-restore-path={{ rke2_etcd_snapshot_name | quote }}
+      > {{ rke2_etcd_restore_log }} 2>&1
+  register: rke2_etcd_restore
   changed_when: true
   # Print the log before failing.
   failed_when: false
   when: not ansible_check_mode
-  run_once: true
 
-- name: Display restore log
+- name: Read restore log
   ansible.builtin.command:
-    cmd: cat {{ etcd_restore_log }}
+    cmd: cat {{ rke2_etcd_restore_log }}
+  register: rke2_etcd_restore_output
   changed_when: false
   failed_when: false
-  register: etcd_restore_log_content
   when: not ansible_check_mode
-  run_once: true
 
 - name: Print restore log
   ansible.builtin.debug:
-    msg: "{{ etcd_restore_log_content.stdout_lines | default([]) }}"
+    msg: "{{ rke2_etcd_restore_output.stdout_lines }}"
   when: not ansible_check_mode
-  run_once: true
 
 - name: Assert restore succeeded
   ansible.builtin.assert:
     that:
-      - etcd_restore_result.rc == 0
-    fail_msg: "Restore failed. The full log is in {{ etcd_restore_log }} on {{ inventory_hostname }}."
+      - rke2_etcd_restore.rc == 0
+    fail_msg: "Restore failed. The full log is in {{ rke2_etcd_restore_log }} on {{ inventory_hostname }}."
     success_msg: "Restore succeeded."
   when: not ansible_check_mode
-  run_once: true
 
 - name: Start RKE2 service
   ansible.builtin.systemd_service:
     name: rke2-server
     state: started
     daemon_reload: true
-  run_once: true
 
 - name: Wait for API server
   ansible.builtin.wait_for:
@@ -137,8 +123,6 @@
     port: 6443
     sleep: 10
     timeout: 300
-  run_once: true
 
 - name: Include node status
   ansible.builtin.include_tasks: common_node_status.yaml
-  run_once: true

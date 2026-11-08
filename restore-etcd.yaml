@@ -1,18 +1,13 @@
 ---
-# Restore etcd from an S3 snapshot.
+# Restore etcd from an S3 snapshot onto the first master, which can be a
+# fresh node with the same WireGuard IP. Workers reconnect on their own; the
+# other masters rejoin as fresh nodes with 01-mesh.yaml and 02-cluster.yaml.
 #
-# This playbook only targets the first master node.
-# Worker nodes are left untouched and will reconnect to the restored cluster
-# automatically once the API server is back up.
-# The rest of the master nodes should join normally as fresh new nodes later.
+#   ansible-playbook restore-etcd.yaml -e rke2_etcd_snapshot_name=<NAME>
 
 - name: Restore etcd from S3
   hosts: k8s_master_nodes[0]
   become: true
-
-  vars:
-    ansible_host: "{{ node_private_ip }}"
-    ansible_user: "{{ ssh_user }}"
 
   tasks:
     - name: Restore etcd from S3
