@@ -10,7 +10,7 @@ The numbered playbooks in `ansible/` are moving to roles at the root, one featur
 | --- | --- |
 | Admin user, SSH hardening, WireGuard mesh | `01-mesh.yaml` |
 | Node baseline, RKE2, etcd restore | `02-cluster.yaml`, `upgrade.yaml`, `restore-etcd.yaml`, `destroy.yaml` |
-| Kubeconfig, Cilium and Flux | `ansible/`, not migrated yet |
+| Cilium and Flux, with Helm on the masters | `ansible/`, not migrated yet |
 | DNS records | `terraform/`, until k8s-fleet's external-dns replaces it |
 
 ## What it builds
@@ -84,7 +84,7 @@ Between the two, this machine joins the mesh. `01-mesh.yaml` ends by listing the
 | | `connection` (mesh) | `k8s_nodes` | Lists the nodes this machine can't reach over WireGuard yet |
 | `02-cluster.yaml` | `connection` (mesh) | `k8s_nodes` | Stops the run if this machine can't reach a node over WireGuard |
 | | `node_baseline` | `k8s_nodes` | Hostname, timezone, NTP, swap off, kernel modules and sysctls. Upgrades the OS, and reboots when it asks, only before RKE2 is installed |
-| | `rke2` | `k8s_nodes` | RKE2 on nodes that don't run it yet: the first master, then the other masters, then the workers |
+| | `rke2` | `k8s_nodes` | RKE2 on nodes that don't run it yet: the first master, then the other masters, then the workers. On masters, `kubectl`, `crictl` and `ctr` on the PATH, and a kubeconfig for the admin user |
 
 Running them again is safe. A node already on the mesh gets WireGuard config changes in place, without dropping the tunnel, and `02-cluster.yaml` never upgrades, restarts or reboots a node that already runs RKE2.
 
@@ -100,7 +100,7 @@ Change `rke2_version` or the RKE2 config, then run `ansible-playbook upgrade.yam
 ansible-playbook restore-etcd.yaml -e rke2_etcd_snapshot_name=<snapshot>
 ```
 
-The restore runs on the first master, which can be a fresh node with the same WireGuard IP. `rke2 etcd-snapshot list` on a master lists the snapshots. No other master may run etcd during the restore: stop `rke2-server` on each and delete `/var/lib/rancher/rke2/server/db`, or rebuild them. The playbook stops before changing anything if one answers on port 2379. Afterwards, `02-cluster.yaml` starts the other masters again, and they join the restored cluster; rebuilt ones need `01-mesh.yaml` first. Workers reconnect on their own. A worker that was in the cluster before the restore can show pods stuck in `Pending` or `Terminating`; restarting the worker clears it.
+The restore runs on the first master, which can be a fresh node with the same WireGuard IP. `rke2 etcd-snapshot list` on a master lists the snapshots. No other master may run etcd during the restore: stop `rke2-server` on each and delete `/var/lib/rancher/rke2/server/db`, or rebuild them. The playbook stops before changing anything if one answers on port 2379. The restored master has `kubectl` and the admin user's kubeconfig ready. Afterwards, `02-cluster.yaml` starts the other masters again, and they join the restored cluster; rebuilt ones need `01-mesh.yaml` first. Workers reconnect on their own. A worker that was in the cluster before the restore can show pods stuck in `Pending` or `Terminating`; restarting the worker clears it.
 
 ### Add a node or an admin machine
 

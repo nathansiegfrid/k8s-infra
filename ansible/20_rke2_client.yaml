@@ -23,34 +23,6 @@
         fail_msg: "RKE2 is not installed on this node. Please run the RKE2 installation playbook first."
         success_msg: "RKE2 is installed."
 
-    - name: Symlink RKE2 binaries to /usr/local/bin
-      ansible.builtin.file:
-        src: "{{ rke2_bin_dir }}/{{ item }}"
-        dest: "/usr/local/bin/{{ item }}"
-        state: link
-        force: true
-      loop:
-        - kubectl
-        - crictl
-        - ctr
-
-    - name: Create user kube directory
-      ansible.builtin.file:
-        path: "/home/{{ ansible_user }}/.kube"
-        state: directory
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
-        mode: "0700"
-
-    - name: Write user kubeconfig file
-      ansible.builtin.copy:
-        src: "{{ rke2_kubeconfig }}"
-        dest: "/home/{{ ansible_user }}/.kube/config"
-        remote_src: true
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
-        mode: "0600"
-
     - name: Check if Helm is already installed
       ansible.builtin.stat:
         path: /usr/local/bin/helm

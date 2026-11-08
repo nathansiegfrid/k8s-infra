@@ -1,0 +1,32 @@
+---
+# For debugging on a master itself: kubectl, crictl and ctr on the PATH, and
+# a kubeconfig for the admin user. install.yaml and etcd_restore.yaml include
+# it on servers, after RKE2 has written its admin kubeconfig.
+
+- name: Symlink RKE2 binaries to /usr/local/bin
+  ansible.builtin.file:
+    src: "{{ rke2_bin_dir }}/{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    state: link
+    force: true
+  loop:
+    - kubectl
+    - crictl
+    - ctr
+
+- name: Create the admin user's kube directory
+  ansible.builtin.file:
+    path: "/home/{{ ansible_user }}/.kube"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0700"
+
+- name: Write the admin user's kubeconfig
+  ansible.builtin.copy:
+    src: "{{ rke2_kubeconfig }}"
+    dest: "/home/{{ ansible_user }}/.kube/config"
+    remote_src: true
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0600"

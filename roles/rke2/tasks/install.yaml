@@ -74,5 +74,9 @@
   # https://docs.rke2.io/install/requirements
   throttle: 50
 
+- name: Include command-line tools on master nodes
+  ansible.builtin.include_tasks: common_cli_tools.yaml
+  when: rke2_type == 'server'
+
 - name: Include node status
   ansible.builtin.include_tasks: common_node_status.yaml

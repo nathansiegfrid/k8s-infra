@@ -148,5 +148,8 @@
     sleep: 10
     timeout: 300
 
+- name: Include command-line tools
+  ansible.builtin.include_tasks: common_cli_tools.yaml
+
 - name: Include node status
   ansible.builtin.include_tasks: common_node_status.yaml
