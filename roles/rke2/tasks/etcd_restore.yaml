@@ -87,16 +87,15 @@
 
 - name: Run etcd cluster-reset restore from S3 snapshot
   ansible.builtin.shell:
-    cmd: rke2 server --cluster-reset --cluster-reset-restore-path={{ etcd_snapshot_name }} > {{ etcd_restore_log }} 2>&1
-  environment:
-    INSTALL_RKE2_VERSION: "{{ rke2_version }}"
-    INSTALL_RKE2_TYPE: "{{ rke2_type }}"
+    cmd: >-
+      rke2 server --cluster-reset
+      --cluster-reset-restore-path={{ etcd_snapshot_name | quote }}
+      > {{ etcd_restore_log }} 2>&1
+  register: etcd_restore_result
+  changed_when: true
+  # Print the log before failing.
+  failed_when: false
   when: not ansible_check_mode
-  run_once: true
-
-- name: Display restore output
-  ansible.builtin.debug:
-    msg: "{{ restore_result.stdout_lines | default([]) }}"
   run_once: true
 
 - name: Display restore log
@@ -111,6 +110,15 @@
 - name: Print restore log
   ansible.builtin.debug:
     msg: "{{ etcd_restore_log_content.stdout_lines | default([]) }}"
+  when: not ansible_check_mode
+  run_once: true
+
+- name: Assert restore succeeded
+  ansible.builtin.assert:
+    that:
+      - etcd_restore_result.rc == 0
+    fail_msg: "Restore failed. The full log is in {{ etcd_restore_log }} on {{ inventory_hostname }}."
+    success_msg: "Restore succeeded."
   when: not ansible_check_mode
   run_once: true
 
