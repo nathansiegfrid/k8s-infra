@@ -1,4 +1,13 @@
 ---
+# The other servers join through the first one, so that's where the
+# restored etcd has to be.
+- name: Assert this is the first server
+  ansible.builtin.assert:
+    that:
+      - inventory_hostname == rke2_first_server
+    fail_msg: "Restore on {{ rke2_first_server }}, the first host in '{{ rke2_servers_group }}'."
+    success_msg: "Restoring on the first server."
+
 - name: Assert etcd_snapshot_name is provided
   ansible.builtin.assert:
     that:
