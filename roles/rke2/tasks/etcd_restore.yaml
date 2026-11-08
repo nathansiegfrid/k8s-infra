@@ -148,6 +148,24 @@
     sleep: 10
     timeout: 300
 
+# The restored etcd still holds the other masters' Nodes, and with them
+# their node passwords. A reinstalled master has a new password, so RKE2
+# would reject it under its old name. Deleting a Node deletes its password
+# too; a master that kept its password file stores it again when it rejoins.
+- name: Delete the other masters' Nodes so they can rejoin
+  ansible.builtin.command:
+    cmd: >-
+      {{ rke2_bin_dir }}/kubectl --kubeconfig {{ rke2_kubeconfig }}
+      delete node {{ item }} --ignore-not-found
+  loop: "{{ rke2_servers | difference([inventory_hostname]) }}"
+  register: rke2_deleted_node
+  # The API server can still be starting.
+  until: rke2_deleted_node.rc == 0
+  retries: 10
+  delay: 10
+  changed_when: "'deleted' in rke2_deleted_node.stdout"
+  when: not ansible_check_mode
+
 - name: Include command-line tools
   ansible.builtin.include_tasks: common_cli_tools.yaml
 
