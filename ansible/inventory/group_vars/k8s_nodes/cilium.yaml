@@ -1,5 +1,0 @@
----
-cilium_namespace: cilium-system
-
-# See available versions in https://github.com/cilium/cilium/releases
-cilium_version: "1.20.0"

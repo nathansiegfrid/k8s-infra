@@ -1,0 +1,23 @@
+---
+# Bootstrap Flux from k8s-fleet, on the first master. Run 02-cluster.yaml
+# first. It connects over WireGuard, so the first play stops the run if this
+# machine can't reach the first master that way.
+#
+# Safe to re-run: components Flux already manages are skipped, and the
+# FluxInstance is left alone. The two Secrets are updated every time, which
+# is how to rotate the deploy key or the cluster's age key.
+
+- name: Check this machine is on the mesh
+  hosts: k8s_master_nodes[0]
+  gather_facts: false
+  tasks:
+    - name: Check the first master over WireGuard
+      ansible.builtin.import_role:
+        name: connection
+        tasks_from: mesh
+
+- name: Bootstrap Flux
+  hosts: k8s_master_nodes[0]
+  become: true
+  roles:
+    - flux_bootstrap

@@ -10,7 +10,7 @@ The numbered playbooks in `ansible/` are moving to roles at the root, one featur
 | --- | --- |
 | Admin user, SSH hardening, WireGuard mesh | `01-mesh.yaml` |
 | Node baseline, RKE2, etcd restore | `02-cluster.yaml`, `upgrade.yaml`, `restore-etcd.yaml`, `destroy.yaml` |
-| Cilium and Flux, with Helm on the masters | `ansible/`, not migrated yet |
+| Cilium and Flux | `03-flux.yaml`, from k8s-fleet's files |
 | DNS records | `terraform/`, until k8s-fleet's external-dns replaces it |
 
 ## What it builds
@@ -20,12 +20,14 @@ The numbered playbooks in `ansible/` are moving to roles at the root, one featur
 - **Nodes ready for Kubernetes:** hostname, timezone, NTP, swap off, kernel modules and sysctls. The OS is upgraded only before RKE2 is installed.
 - **RKE2 with the CIS profile.** Pod Security `restricted` is the default for every namespace except `kube-system`. API audit logging is on, the kubelet reserves 1 CPU and 1.5Gi for Kubernetes and the OS, and control-plane nodes are tainted `NoSchedule`.
 - **etcd snapshots** every 6 hours to S3-compatible storage, keeping 28 (7 days).
+- **Flux.** Cilium and Flux Operator are installed from k8s-fleet's own files, along with the two secrets Flux can't get from git. Flux then takes over.
 
 ## Layout
 
 ```
 01-mesh.yaml        secure every host and build the WireGuard mesh
 02-cluster.yaml     prepare the nodes and install RKE2, over WireGuard
+03-flux.yaml        bootstrap Flux from k8s-fleet, on the first master
 upgrade.yaml        RKE2 config, OS and RKE2 upgrades, one node at a time
 restore-etcd.yaml   restore etcd from an S3 snapshot
 destroy.yaml        remove RKE2 from every node
@@ -43,14 +45,17 @@ On this machine:
 - Ansible, plus the collections: `ansible-galaxy collection install -r requirements.yaml`
 - [SOPS](https://getsops.io/) and [age](https://github.com/FiloSottile/age)
 - WireGuard, to join the mesh
+- A checkout of k8s-fleet next to this one (`../k8s-fleet`), or `flux_bootstrap_fleet_dir` pointing at it
 
 The nodes run Ubuntu or Debian.
 
 ## Setup
 
 1. **Your age key.** Run `age-keygen -o <key file>`. SOPS looks for it at `~/Library/Application Support/sops/age/keys.txt` on macOS, `~/.config/sops/age/keys.txt` on Linux, or wherever `SOPS_AGE_KEY_FILE` points. Put its public key in `.sops.yaml`.
-2. **The inventory.** Copy `inventory/hosts.yaml.example` to `inventory/hosts.yaml` and fill in the real IPs. It's git-ignored.
-3. **The secrets.** Run `sops inventory/group_vars/k8s_nodes/secrets.sops.yaml`; SOPS encrypts the file when you save:
+2. **The cluster's age key.** Run `age-keygen -o cluster.agekey`. The private key goes into `flux_sops_age_key` below; Flux uses it to decrypt k8s-fleet's secrets.
+3. **A deploy key.** Run `ssh-keygen -t ed25519 -N '' -f k8s-fleet-deploy` and add the `.pub` to k8s-fleet as a read-only deploy key. The private key goes into `flux_git_deploy_key`.
+4. **The inventory.** Copy `inventory/hosts.yaml.example` to `inventory/hosts.yaml` and fill in the real IPs. It's git-ignored.
+5. **The secrets.** Run `sops inventory/group_vars/k8s_nodes/secrets.sops.yaml`; SOPS encrypts the file when you save:
 
 ```yaml
 rke2_server_token: <random, at least 16 characters>
@@ -65,6 +70,9 @@ wireguard_extra_peers:
     public_key: <from `wg pubkey` on the laptop>
     allowed_ips: 10.0.0.100/32
     private_key: <optional: the laptop's private key, written into its client config>
+flux_git_deploy_key: |
+  <the deploy key's private half>
+flux_sops_age_key: <the cluster's age private key>
 ```
 
 ## Building the cluster
@@ -72,9 +80,10 @@ wireguard_extra_peers:
 ```sh
 ansible-playbook 01-mesh.yaml
 ansible-playbook 02-cluster.yaml
+ansible-playbook 03-flux.yaml
 ```
 
-Between the two, this machine joins the mesh. `01-mesh.yaml` ends by listing the nodes this machine can't reach over WireGuard yet. Import this machine's client config from `generated/`, add its private key unless the config already has it, and bring the tunnel up. `02-cluster.yaml` connects only over WireGuard, and stops before changing anything if a node doesn't answer.
+Between the first two, this machine joins the mesh. `01-mesh.yaml` ends by listing the nodes this machine can't reach over WireGuard yet. Import this machine's client config from `generated/`, add its private key unless the config already has it, and bring the tunnel up. `02-cluster.yaml` and `03-flux.yaml` connect only over WireGuard, and stop before changing anything if a node doesn't answer.
 
 | Playbook | Role | Hosts | Does |
 | --- | --- | --- | --- |
@@ -85,8 +94,16 @@ Between the two, this machine joins the mesh. `01-mesh.yaml` ends by listing the
 | `02-cluster.yaml` | `connection` (mesh) | `k8s_nodes` | Stops the run if this machine can't reach a node over WireGuard |
 | | `node_baseline` | `k8s_nodes` | Hostname, timezone, NTP, swap off, kernel modules and sysctls. Upgrades the OS, and reboots when it asks, only before RKE2 is installed |
 | | `rke2` | `k8s_nodes` | RKE2 on nodes that don't run it yet: the first master, then the other masters, then the workers. On masters, `kubectl`, `crictl` and `ctr` on the PATH, and a kubeconfig for the admin user |
+| `03-flux.yaml` | `connection` (mesh) | first master | Stops the run if this machine can't reach it over WireGuard |
+| | `flux_bootstrap` | first master | Helm, then Cilium and Flux Operator from k8s-fleet's files, the deploy key and age key Secrets, and the FluxInstance. Waits until Flux is Ready |
 
-Running them again is safe. A node already on the mesh gets WireGuard config changes in place, without dropping the tunnel, and `02-cluster.yaml` never upgrades, restarts or reboots a node that already runs RKE2.
+Running them again is safe:
+
+- A node already on the mesh gets WireGuard config changes in place, without dropping the tunnel.
+- `02-cluster.yaml` never upgrades, restarts or reboots a node that already runs RKE2.
+- `03-flux.yaml` skips components Flux already manages, and leaves the FluxInstance alone. It does update the two Secrets, so it's also how to rotate the deploy key or the cluster's age key.
+
+The Flux bootstrap reads k8s-fleet on this machine and passes the files to the first master over stdin. Flux syncs k8s-fleet's `main` from GitHub, so push k8s-fleet before running it. Once Flux runs, Cilium, Flux Operator and the FluxInstance change in k8s-fleet, not here.
 
 ## Day 2
 

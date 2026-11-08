@@ -1,0 +1,86 @@
+---
+# Bootstraps Flux, the way Flux's own Terraform bootstrap does: install the
+# CNI and Flux Operator with Helm, create the secrets Flux can't get from
+# git, then create the FluxInstance and let Flux take over. Runs on the
+# first master. The k8s-fleet files are read on this machine and passed over
+# stdin, so none of them is written to the node.
+#
+# Safe to re-run: components Flux already manages are skipped, and an
+# existing FluxInstance is left alone. The secrets are updated every time.
+
+- name: Assert the k8s-fleet checkout exists
+  ansible.builtin.assert:
+    that:
+      - (flux_bootstrap_fleet_dir ~ '/' ~ flux_bootstrap_cluster_dir ~ '/flux-instance.yaml') is file
+    fail_msg: >-
+      No {{ flux_bootstrap_cluster_dir }}/flux-instance.yaml in {{ flux_bootstrap_fleet_dir }}.
+      Clone k8s-fleet there, or set flux_bootstrap_fleet_dir.
+    success_msg: "Using k8s-fleet at {{ flux_bootstrap_fleet_dir }}."
+
+- name: Assert the bootstrap secrets are set
+  ansible.builtin.assert:
+    that:
+      - flux_git_deploy_key is defined
+      - flux_sops_age_key is defined
+    fail_msg: "Set flux_git_deploy_key and flux_sops_age_key in secrets.sops.yaml."
+    success_msg: "Bootstrap secrets are set."
+
+# 03-flux.yaml runs after 02-cluster.yaml, which installs RKE2.
+- name: Check for RKE2's admin kubeconfig
+  ansible.builtin.stat:
+    path: "{{ flux_bootstrap_kubeconfig }}"
+  register: flux_bootstrap_kubeconfig_file
+
+- name: Assert RKE2 runs on this node
+  ansible.builtin.assert:
+    that:
+      - flux_bootstrap_kubeconfig_file.stat.exists
+    fail_msg: "No {{ flux_bootstrap_kubeconfig }} on {{ inventory_hostname }}. Run 02-cluster.yaml first."
+    success_msg: "RKE2 runs on {{ inventory_hostname }}."
+
+- name: Include Helm
+  ansible.builtin.include_tasks: helm.yaml
+
+- name: Install components Flux needs to start
+  ansible.builtin.include_tasks: component.yaml
+  loop: "{{ flux_bootstrap_components }}"
+  loop_control:
+    loop_var: flux_bootstrap_component
+  vars:
+    flux_bootstrap_component_dir: "{{ flux_bootstrap_fleet_dir }}/platform/{{ flux_bootstrap_component }}"
+
+- name: Collect GitHub's SSH host keys
+  ansible.builtin.command:
+    cmd: ssh-keyscan github.com
+  register: flux_bootstrap_known_hosts
+  changed_when: false
+
+- name: Apply the Git deploy key and SOPS age key
+  ansible.builtin.command:
+    argv: ["{{ flux_bootstrap_kubectl }}", --kubeconfig, "{{ flux_bootstrap_kubeconfig }}", apply, -f, "-"]
+    stdin: "{{ lookup('ansible.builtin.template', 'secrets.yaml.j2') }}"
+  register: flux_bootstrap_secrets
+  changed_when: "'configured' in flux_bootstrap_secrets.stdout or 'created' in flux_bootstrap_secrets.stdout"
+  no_log: true
+
+- name: Create the FluxInstance
+  ansible.builtin.command:
+    argv: ["{{ flux_bootstrap_kubectl }}", --kubeconfig, "{{ flux_bootstrap_kubeconfig }}", create, -f, "-"]
+    stdin: "{{ lookup('ansible.builtin.file', flux_bootstrap_fleet_dir ~ '/' ~ flux_bootstrap_cluster_dir ~ '/flux-instance.yaml') }}"
+  register: flux_bootstrap_instance
+  changed_when: flux_bootstrap_instance.rc == 0
+  # Once it exists, Flux manages it from k8s-fleet.
+  failed_when: flux_bootstrap_instance.rc != 0 and 'AlreadyExists' not in flux_bootstrap_instance.stderr
+
+- name: Wait for Flux to sync
+  ansible.builtin.command:
+    argv:
+      - "{{ flux_bootstrap_kubectl }}"
+      - --kubeconfig
+      - "{{ flux_bootstrap_kubeconfig }}"
+      - wait
+      - fluxinstance/flux
+      - --namespace=flux-system
+      - --for=condition=Ready
+      - --timeout=10m
+  changed_when: false

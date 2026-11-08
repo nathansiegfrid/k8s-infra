@@ -1,0 +1,37 @@
+---
+# Helm on the first master, at flux_bootstrap_helm_version. Only the
+# bootstrap uses it; once Flux runs, helm-controller manages the releases.
+
+- name: Check the installed Helm version
+  ansible.builtin.command:
+    argv: ["{{ flux_bootstrap_helm }}", version, --short]
+  register: flux_bootstrap_helm_installed
+  changed_when: false
+  failed_when: false
+
+- name: Install Helm {{ flux_bootstrap_helm_version }}
+  when: >-
+    flux_bootstrap_helm_installed.rc != 0
+    or flux_bootstrap_helm_installed.stdout.split('+') | first != flux_bootstrap_helm_version
+  vars:
+    flux_bootstrap_helm_url: https://get.helm.sh/helm-{{ flux_bootstrap_helm_version }}-linux-{{ flux_bootstrap_helm_arch }}.tar.gz
+  block:
+    - name: Download Helm
+      ansible.builtin.get_url:
+        url: "{{ flux_bootstrap_helm_url }}"
+        checksum: "sha256:{{ flux_bootstrap_helm_url }}.sha256sum"
+        dest: /tmp/helm.tar.gz
+        mode: "0600"
+
+    - name: Unpack Helm
+      ansible.builtin.unarchive:
+        src: /tmp/helm.tar.gz
+        dest: "{{ flux_bootstrap_helm | dirname }}"
+        remote_src: true
+        include:
+          - linux-{{ flux_bootstrap_helm_arch }}/helm
+        extra_opts:
+          - --strip-components=1
+        owner: root
+        group: root
+        mode: "0755"

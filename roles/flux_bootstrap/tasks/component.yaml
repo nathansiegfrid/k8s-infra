@@ -1,0 +1,55 @@
+---
+# Installs one k8s-fleet platform component with Helm, from its own files:
+# namespace.yaml, oci-repository.yaml, helm-release.yaml and values.yaml.
+
+- name: Read the k8s-fleet files for {{ flux_bootstrap_component }}
+  ansible.builtin.set_fact:
+    flux_bootstrap_source: "{{ lookup('ansible.builtin.file', flux_bootstrap_component_dir ~ '/oci-repository.yaml') | from_yaml }}"
+    flux_bootstrap_release: "{{ lookup('ansible.builtin.file', flux_bootstrap_component_dir ~ '/helm-release.yaml') | from_yaml }}"
+
+- name: Check if Flux manages {{ flux_bootstrap_component }}
+  ansible.builtin.command:
+    argv:
+      - "{{ flux_bootstrap_kubectl }}"
+      - --kubeconfig
+      - "{{ flux_bootstrap_kubeconfig }}"
+      - get
+      - helmrelease
+      - "{{ flux_bootstrap_release.metadata.name }}"
+      - --namespace={{ flux_bootstrap_release.metadata.namespace }}
+      - --ignore-not-found
+      - --output=name
+  register: flux_bootstrap_helmrelease
+  changed_when: false
+  # Before Flux is installed the HelmRelease kind doesn't exist yet.
+  failed_when: false
+
+- name: Install {{ flux_bootstrap_component }}
+  when: flux_bootstrap_helmrelease.stdout | length == 0
+  block:
+    # Applied before Helm creates anything, so the Pod Security labels are in place.
+    - name: Apply namespace for {{ flux_bootstrap_component }}
+      ansible.builtin.command:
+        argv: ["{{ flux_bootstrap_kubectl }}", --kubeconfig, "{{ flux_bootstrap_kubeconfig }}", apply, -f, "-"]
+        stdin: "{{ lookup('ansible.builtin.file', flux_bootstrap_component_dir ~ '/namespace.yaml') }}"
+      changed_when: true
+      when: (flux_bootstrap_component_dir ~ '/namespace.yaml') is file
+
+    # Same release name and namespace as the HelmRelease, so Flux adopts it.
+    - name: Install {{ flux_bootstrap_component }} with Helm # noqa: name[template]
+      ansible.builtin.command:
+        argv:
+          - "{{ flux_bootstrap_helm }}"
+          - upgrade
+          - --install
+          - "{{ flux_bootstrap_release.spec.releaseName }}"
+          - "{{ flux_bootstrap_source.spec.url }}"
+          - --version={{ flux_bootstrap_source.spec.ref.tag }}
+          - --namespace={{ flux_bootstrap_release.spec.targetNamespace }}
+          - --create-namespace
+          - --values=-
+          - --kubeconfig={{ flux_bootstrap_kubeconfig }}
+          - --wait
+          - --timeout=10m
+        stdin: "{{ lookup('ansible.builtin.file', flux_bootstrap_component_dir ~ '/values.yaml') }}"
+      changed_when: true
