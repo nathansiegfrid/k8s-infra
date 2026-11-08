@@ -24,6 +24,13 @@ flux_bootstrap_helm_version: v4.2.4
 flux_bootstrap_helm: /usr/local/bin/helm
 flux_bootstrap_helm_arch: "{{ {'x86_64': 'amd64', 'aarch64': 'arm64'}[ansible_facts['architecture']] }}"
 
+# GitHub's SSH host keys, for Flux to verify github.com when it pulls
+# k8s-fleet. Pinned in files/github_known_hosts rather than scanned at
+# bootstrap, so a spoofed github.com can't hand Flux its own key. When
+# GitHub rotates a key, copy the new lines from:
+# https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints
+flux_bootstrap_known_hosts: "{{ lookup('ansible.builtin.file', 'github_known_hosts') }}"
+
 # From secrets.sops.yaml:
 #   flux_git_deploy_key  SSH private key with read access to k8s-fleet
 #   flux_sops_age_key    the cluster's age private key, for k8s-fleet's secrets

@@ -49,12 +49,6 @@
   vars:
     flux_bootstrap_component_dir: "{{ flux_bootstrap_fleet_dir }}/platform/{{ flux_bootstrap_component }}"
 
-- name: Collect GitHub's SSH host keys
-  ansible.builtin.command:
-    cmd: ssh-keyscan github.com
-  register: flux_bootstrap_known_hosts
-  changed_when: false
-
 - name: Apply the Git deploy key and SOPS age key
   ansible.builtin.command:
     argv: ["{{ flux_bootstrap_kubectl }}", --kubeconfig, "{{ flux_bootstrap_kubeconfig }}", apply, -f, "-"]
