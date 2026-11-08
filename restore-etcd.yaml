@@ -1,12 +1,21 @@
 ---
 # Restore etcd from an S3 snapshot onto the first master, which can be a
-# fresh node with the same WireGuard IP. No other master may run etcd: stop
-# rke2-server and delete its server/db, or rebuild it. Afterwards,
-# 02-cluster.yaml starts the other masters again, and they join the restored
-# cluster; rebuilt ones need 01-mesh.yaml first. Workers reconnect on their
-# own.
+# fresh node with the same WireGuard IP: run 01-mesh.yaml first, and this
+# playbook prepares the node as 02-cluster.yaml would. No other master may
+# run etcd: stop rke2-server and delete its server/db, or rebuild it.
+# Afterwards, 02-cluster.yaml starts the other masters again, and they join
+# the restored cluster; rebuilt ones need 01-mesh.yaml first. Workers
+# reconnect on their own.
 #
 #   ansible-playbook restore-etcd.yaml -e rke2_etcd_snapshot_name=<NAME>
+
+# The same preparation 02-cluster.yaml gives a new node, before RKE2 is
+# installed on it. On a node that already runs RKE2, it changes nothing new.
+- name: Prepare the first master for Kubernetes
+  hosts: k8s_master_nodes[0]
+  become: true
+  roles:
+    - node_baseline
 
 - name: Restore etcd from S3
   hosts: k8s_master_nodes[0]
