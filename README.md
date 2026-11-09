@@ -115,7 +115,7 @@ The restore runs on the first master, which can be a fresh node with the same Wi
 
 For a node, add it to `inventory/hosts.yaml` and run `01-mesh.yaml`. Import the new client config on this machine, check that it reaches the node, then run `02-cluster.yaml`.
 
-For an admin machine, add it to `wireguard_extra_peers` and run `01-mesh.yaml`; that's all it needs. Its client config is written to `generated/`, with its private key if the peer has `private_key` set. Otherwise fill the key in on the machine itself. The config sends a keepalive every 25 seconds, so a NAT in front of the machine keeps the tunnel open; set `persistent_keepalive` on the peer to change it.
+For an admin machine, add it to `wireguard_extra_peers` and run `01-mesh.yaml`; that's all it needs. Its client config is written to `generated/`, with its private key if the peer has `private_key` set. Otherwise fill the key in on the machine itself. The config sends a keepalive every 25 seconds, so a NAT in front of the machine keeps the tunnel open; set `persistent_keepalive` on the peer to change it. Its MTU is 1280, so the tunnel works on connections with a smaller path MTU, such as mobile or tethered ones; set `mtu` on the peer to change it.
 
 ### Tear down
 

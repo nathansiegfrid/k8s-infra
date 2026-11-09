@@ -6,11 +6,13 @@
 # wireguard_extra_peers to have it filled in.
 {% endif %}
 # PersistentKeepalive stops a NAT in front of this machine from closing the
-# tunnel while a long task is quiet.
+# tunnel while a long task is quiet. The MTU leaves room for networks whose
+# path MTU is smaller than usual, where full-size packets would be dropped.
 
 [Interface]
 PrivateKey = {{ item.private_key | default('<REPLACE_WITH_PRIVATE_KEY>') }}
 Address = {{ item.allowed_ips.split('/')[0] }}/24
+MTU = {{ item.mtu | default(wireguard_client_mtu) }}
 
 {% for host in groups['k8s_nodes'] %}
 # {{ host }}

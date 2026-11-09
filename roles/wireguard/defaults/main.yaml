@@ -1,7 +1,16 @@
 ---
 wireguard_interface: wg0
 wireguard_port: 51820
+# The mesh's tunnel MTU on every node: WireGuard's own default, a
+# 1500-byte path minus the 80 bytes WireGuard adds at most (over IPv6).
+# Set here rather than left to wg-quick, which derives it from each node's
+# NIC and, behind jumbo frames, would pick more than the internet path
+# between providers carries. Cilium's VXLAN runs inside it, at 1370.
 wireguard_mtu: 1420
+# The tunnel MTU in admin machines' client configs. 1280, the smallest MTU
+# IPv6 allows, fits behind any connection a laptop is likely to be on, such
+# as a mobile or tethered one with a smaller path MTU than the nodes have.
+wireguard_client_mtu: 1280
 wireguard_persistent_keepalive: 25
 wireguard_dir: /etc/wireguard
 
@@ -10,6 +19,7 @@ wireguard_dir: /etc/wireguard
 #   public_key: "<from `wg pubkey`>"
 #   allowed_ips: 10.0.0.100/32
 #   private_key: "<optional: written into the client config>"
+#   mtu: <optional: defaults to 1280>
 #   persistent_keepalive: <optional: seconds, 0 for none; defaults to 25>
 wireguard_extra_peers: []
 
