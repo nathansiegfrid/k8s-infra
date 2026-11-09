@@ -3,6 +3,5 @@ exclude_paths:
   # Encrypted; CI has no key.
   - inventory/group_vars/k8s_nodes/secrets.sops.yaml
   - generated/
-  # Not migrated yet. Each goes once its last file has moved to the root.
-  - ansible/
+  # Not migrated yet; goes once k8s-fleet's external-dns manages DNS.
   - terraform/

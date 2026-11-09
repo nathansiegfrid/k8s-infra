@@ -4,14 +4,7 @@ Ansible that turns plain VPSs from different providers into an RKE2 cluster, the
 
 ## Migration in progress
 
-The numbered playbooks in `ansible/` are moving to roles at the root, one feature at a time. Each step moves the files it reuses and deletes the playbooks it replaces; what's left in `ansible/` isn't maintained.
-
-| Feature | Where |
-| --- | --- |
-| Admin user, SSH hardening, WireGuard mesh | `01-mesh.yaml` |
-| Node baseline, RKE2, etcd restore | `02-cluster.yaml`, `upgrade.yaml`, `restore-etcd.yaml`, `destroy.yaml` |
-| Cilium and Flux | `03-flux.yaml`, from k8s-fleet's files |
-| DNS records | `terraform/`, until k8s-fleet's external-dns replaces it |
+DNS records are still Terraform, in `terraform/`, until k8s-fleet's external-dns manages them from the cluster's routes.
 
 ## What it builds
 
@@ -34,7 +27,6 @@ destroy.yaml        remove RKE2 from every node
 roles/              one role per concern, listed under "Building the cluster"
 inventory/          hosts.yaml (git-ignored), group_vars, and secrets.sops.yaml
 generated/          WireGuard client configs (git-ignored)
-ansible/            the old playbooks, until they're migrated
 terraform/          DNS records, until they move to k8s-fleet
 ```
 
@@ -131,6 +123,6 @@ For an admin machine, add it to `wireguard_extra_peers` and run `01-mesh.yaml`; 
 
 ## CI
 
-ansible-lint (production profile) runs without decrypting anything, and skips `ansible/` and `terraform/` until they're migrated. A second job fails if any `*.sops.yaml` file isn't encrypted. Both run on every push to `main` and on pull requests.
+ansible-lint (production profile) runs without decrypting anything, and skips `terraform/` until it's migrated. A second job fails if any `*.sops.yaml` file isn't encrypted. Both run on every push to `main` and on pull requests.
 
 CI doesn't run the playbooks against real nodes. The manual test cases for that are in [TESTING.md](TESTING.md).
