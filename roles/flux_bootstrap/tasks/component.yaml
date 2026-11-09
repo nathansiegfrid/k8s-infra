@@ -4,8 +4,9 @@
 
 - name: Read the k8s-fleet files for {{ flux_bootstrap_component }}
   ansible.builtin.set_fact:
-    flux_bootstrap_source: "{{ lookup('ansible.builtin.file', flux_bootstrap_component_dir ~ '/oci-repository.yaml') | from_yaml }}"
-    flux_bootstrap_release: "{{ lookup('ansible.builtin.file', flux_bootstrap_component_dir ~ '/helm-release.yaml') | from_yaml }}"
+    flux_bootstrap_kustomization: "{{ lookup('ansible.builtin.file', flux_bootstrap_component_files ~ '/kustomization.yaml') | from_yaml }}"
+    flux_bootstrap_source: "{{ lookup('ansible.builtin.file', flux_bootstrap_component_files ~ '/oci-repository.yaml') | from_yaml }}"
+    flux_bootstrap_release: "{{ lookup('ansible.builtin.file', flux_bootstrap_component_files ~ '/helm-release.yaml') | from_yaml }}"
 
 - name: Check if Flux manages {{ flux_bootstrap_component }}
   ansible.builtin.command:
@@ -31,9 +32,10 @@
     - name: Apply namespace for {{ flux_bootstrap_component }}
       ansible.builtin.command:
         argv: ["{{ flux_bootstrap_kubectl }}", --kubeconfig, "{{ flux_bootstrap_kubeconfig }}", apply, -f, "-"]
-        stdin: "{{ lookup('ansible.builtin.file', flux_bootstrap_component_dir ~ '/namespace.yaml') }}"
+        stdin: "{{ lookup('ansible.builtin.file', flux_bootstrap_component_files ~ '/namespace.yaml') }}"
       changed_when: true
-      when: (flux_bootstrap_component_dir ~ '/namespace.yaml') is file
+      # Only a component whose kustomization lists namespace.yaml brings its own.
+      when: "'namespace.yaml' in flux_bootstrap_kustomization.resources | default([])"
 
     # Same release name and namespace as the HelmRelease, so Flux adopts it.
     - name: Install {{ flux_bootstrap_component }} with Helm # noqa: name[template]
@@ -51,5 +53,5 @@
           - --kubeconfig={{ flux_bootstrap_kubeconfig }}
           - --wait
           - --timeout=10m
-        stdin: "{{ lookup('ansible.builtin.file', flux_bootstrap_component_dir ~ '/values.yaml') }}"
+        stdin: "{{ lookup('ansible.builtin.file', flux_bootstrap_component_files ~ '/values.yaml') }}"
       changed_when: true

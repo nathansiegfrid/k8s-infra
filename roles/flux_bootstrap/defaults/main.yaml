@@ -1,8 +1,12 @@
 ---
-# A checkout of k8s-fleet on this machine. The bootstrap reads Cilium's and
-# Flux Operator's definitions and the FluxInstance from it, so nothing here
-# duplicates what Flux manages.
-flux_bootstrap_fleet_dir: "{{ playbook_dir }}/../k8s-fleet"
+# k8s-fleet, cloned fresh on this machine on every run, with this machine's
+# own SSH access to GitHub, so the repository can be private. The bootstrap
+# reads Cilium's and Flux Operator's definitions and the FluxInstance from
+# the branch's latest commit, so Helm installs what Flux syncs and nothing
+# here duplicates what Flux manages. The URL and branch must be the ones the
+# FluxInstance syncs.
+flux_bootstrap_fleet_url: ssh://git@github.com/nathansiegfrid/k8s-fleet.git
+flux_bootstrap_fleet_branch: main
 flux_bootstrap_cluster_dir: clusters/homelab
 
 # Installed with Helm before Flux exists, in this order. Each is a directory

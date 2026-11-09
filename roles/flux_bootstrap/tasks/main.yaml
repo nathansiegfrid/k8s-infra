@@ -2,20 +2,11 @@
 # Bootstraps Flux, the way Flux's own Terraform bootstrap does: install the
 # CNI and Flux Operator with Helm, create the secrets Flux can't get from
 # git, then create the FluxInstance and let Flux take over. Runs on the
-# first master. The k8s-fleet files are read on this machine and passed over
-# stdin, so none of them is written to the node.
+# first master, from a fresh clone of k8s-fleet on this machine. The files
+# go to the master over stdin, so none of them is written to the node.
 #
 # Safe to re-run: components Flux already manages are skipped, and an
 # existing FluxInstance is left alone. The secrets are updated every time.
-
-- name: Assert the k8s-fleet checkout exists
-  ansible.builtin.assert:
-    that:
-      - (flux_bootstrap_fleet_dir ~ '/' ~ flux_bootstrap_cluster_dir ~ '/flux-instance.yaml') is file
-    fail_msg: >-
-      No {{ flux_bootstrap_cluster_dir }}/flux-instance.yaml in {{ flux_bootstrap_fleet_dir }}.
-      Clone k8s-fleet there, or set flux_bootstrap_fleet_dir.
-    success_msg: "Using k8s-fleet at {{ flux_bootstrap_fleet_dir }}."
 
 - name: Assert the bootstrap secrets are set
   ansible.builtin.assert:
@@ -41,30 +32,77 @@
 - name: Include Helm
   ansible.builtin.include_tasks: helm.yaml
 
-- name: Install components Flux needs to start
-  ansible.builtin.include_tasks: component.yaml
-  loop: "{{ flux_bootstrap_components }}"
-  loop_control:
-    loop_var: flux_bootstrap_component
-  vars:
-    flux_bootstrap_component_dir: "{{ flux_bootstrap_fleet_dir }}/platform/{{ flux_bootstrap_component }}"
+- name: Install from k8s-fleet
+  block:
+    - name: Create a directory for the k8s-fleet clone
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: k8s-fleet.
+      delegate_to: localhost
+      become: false
+      register: flux_bootstrap_fleet_clone
 
-- name: Apply the Git deploy key and SOPS age key
-  ansible.builtin.command:
-    argv: ["{{ flux_bootstrap_kubectl }}", --kubeconfig, "{{ flux_bootstrap_kubeconfig }}", apply, -f, "-"]
-    stdin: "{{ lookup('ansible.builtin.template', 'secrets.yaml.j2') }}"
-  register: flux_bootstrap_secrets
-  changed_when: "'configured' in flux_bootstrap_secrets.stdout or 'created' in flux_bootstrap_secrets.stdout"
-  no_log: true
+    # A fresh clone, so local edits won't reach the cluster.
+    - name: Clone k8s-fleet's branch {{ flux_bootstrap_fleet_branch }}
+      ansible.builtin.command:
+        argv:
+          - git
+          - clone
+          - --quiet
+          - --depth=1
+          - --single-branch
+          - --branch={{ flux_bootstrap_fleet_branch }}
+          - "{{ flux_bootstrap_fleet_url }}"
+          - "{{ flux_bootstrap_fleet_clone.path }}"
+      delegate_to: localhost
+      become: false
+      changed_when: false
 
-- name: Create the FluxInstance
-  ansible.builtin.command:
-    argv: ["{{ flux_bootstrap_kubectl }}", --kubeconfig, "{{ flux_bootstrap_kubeconfig }}", create, -f, "-"]
-    stdin: "{{ lookup('ansible.builtin.file', flux_bootstrap_fleet_dir ~ '/' ~ flux_bootstrap_cluster_dir ~ '/flux-instance.yaml') }}"
-  register: flux_bootstrap_instance
-  changed_when: flux_bootstrap_instance.rc == 0
-  # Once it exists, Flux manages it from k8s-fleet.
-  failed_when: flux_bootstrap_instance.rc != 0 and 'AlreadyExists' not in flux_bootstrap_instance.stderr
+    - name: Find the k8s-fleet commit
+      ansible.builtin.command:
+        argv: [git, -C, "{{ flux_bootstrap_fleet_clone.path }}", rev-parse, HEAD]
+      delegate_to: localhost
+      become: false
+      register: flux_bootstrap_fleet_commit
+      changed_when: false
+
+    - name: Show the k8s-fleet commit
+      ansible.builtin.debug:
+        msg: "Installing from k8s-fleet {{ flux_bootstrap_fleet_commit.stdout }}, the head of {{ flux_bootstrap_fleet_branch }}."
+
+    - name: Install components Flux needs to start
+      ansible.builtin.include_tasks: component.yaml
+      loop: "{{ flux_bootstrap_components }}"
+      loop_control:
+        loop_var: flux_bootstrap_component
+      vars:
+        flux_bootstrap_component_files: "{{ flux_bootstrap_fleet_clone.path }}/platform/{{ flux_bootstrap_component }}"
+
+    - name: Apply the Git deploy key and SOPS age key
+      ansible.builtin.command:
+        argv: ["{{ flux_bootstrap_kubectl }}", --kubeconfig, "{{ flux_bootstrap_kubeconfig }}", apply, -f, "-"]
+        stdin: "{{ lookup('ansible.builtin.template', 'secrets.yaml.j2') }}"
+      register: flux_bootstrap_secrets
+      changed_when: "'configured' in flux_bootstrap_secrets.stdout or 'created' in flux_bootstrap_secrets.stdout"
+      no_log: true
+
+    - name: Create the FluxInstance
+      ansible.builtin.command:
+        argv: ["{{ flux_bootstrap_kubectl }}", --kubeconfig, "{{ flux_bootstrap_kubeconfig }}", create, -f, "-"]
+        stdin: "{{ lookup('ansible.builtin.file', flux_bootstrap_fleet_clone.path ~ '/' ~ flux_bootstrap_cluster_dir ~ '/flux-instance.yaml') }}"
+      register: flux_bootstrap_instance
+      changed_when: flux_bootstrap_instance.rc == 0
+      # Once it exists, Flux manages it from k8s-fleet.
+      failed_when: flux_bootstrap_instance.rc != 0 and 'AlreadyExists' not in flux_bootstrap_instance.stderr
+
+  always:
+    - name: Remove the k8s-fleet clone
+      ansible.builtin.file:
+        path: "{{ flux_bootstrap_fleet_clone.path }}"
+        state: absent
+      delegate_to: localhost
+      become: false
+      when: flux_bootstrap_fleet_clone.path is defined
 
 - name: Wait for Flux to sync
   ansible.builtin.command:

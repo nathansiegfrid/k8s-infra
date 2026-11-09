@@ -45,7 +45,7 @@ On this machine:
 - Ansible, plus the collections: `ansible-galaxy collection install -r requirements.yaml`
 - [SOPS](https://getsops.io/) and [age](https://github.com/FiloSottile/age)
 - WireGuard, to join the mesh
-- A checkout of k8s-fleet next to this one (`../k8s-fleet`), or `flux_bootstrap_fleet_dir` pointing at it
+- SSH access to k8s-fleet on GitHub, the Flux bootstrap clones it
 
 The nodes run Ubuntu or Debian.
 
@@ -103,7 +103,7 @@ Running them again is safe:
 - `02-cluster.yaml` never upgrades, restarts or reboots a node that already runs RKE2.
 - `03-flux.yaml` skips components Flux already manages, and leaves the FluxInstance alone. It does update the two Secrets, so it's also how to rotate the deploy key or the cluster's age key.
 
-The Flux bootstrap reads k8s-fleet on this machine and passes the files to the first master over stdin. Flux syncs k8s-fleet's `main` from GitHub, so push k8s-fleet before running it. Once Flux runs, Cilium, Flux Operator and the FluxInstance change in k8s-fleet, not here.
+The Flux bootstrap clones k8s-fleet's `main` fresh on every run, so it installs what Flux syncs, never local edits: push k8s-fleet changes before running it. The files go to the first master over stdin. Once Flux runs, Cilium, Flux Operator and the FluxInstance change in k8s-fleet, not here.
 
 ## Day 2
 
