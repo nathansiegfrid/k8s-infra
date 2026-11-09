@@ -10,6 +10,13 @@ Verify that `01-mesh.yaml` and `02-cluster.yaml` build the cluster in each of th
 - [ ] One master first, then the rest
 - [ ] One master and a worker first, then two more masters
 
+## Flux bootstrap
+
+- [ ] On a new cluster, verify `03-flux.yaml` ends with every node `Ready`, and with everything in `kubectl -n flux-system get fluxinstance,kustomizations,helmreleases` `Ready`.
+- [ ] Verify Flux adopted the two Helm releases: `helm -n cilium-system history cilium` and `helm -n flux-system history flux-operator` each show a revision after the bootstrap's.
+- [ ] Change a value in a component's `values.yaml` in k8s-fleet and push. Verify Flux upgrades the release without a field-manager conflict.
+- [ ] Run `03-flux.yaml` again. Verify it makes no Helm calls and leaves the FluxInstance alone.
+
 ## etcd snapshots with `rke2_etcd_s3: true`
 
 - [ ] Run `sudo rke2 etcd-snapshot save` on a master, then verify the snapshot shows in `sudo rke2 etcd-snapshot list` and in the bucket's console.
