@@ -2,19 +2,33 @@
 # On a new cluster, nodes stay NotReady until a CNI is installed, so an
 # install accepts a node that has registered. A rolling update sets
 # rke2_node_ready_required: the node has to be Ready again.
+#
+# After a reboot, the Node object still holds what the kubelet reported
+# before it: Kubernetes marks a silent node NotReady only after about 50
+# seconds, and a VM can reboot faster. The status counts only once it comes
+# from the kubelet of this boot, with the node's current boot ID.
+- name: Read the node's boot ID
+  ansible.builtin.slurp:
+    src: /proc/sys/kernel/random/boot_id
+  register: rke2_boot_id
+
 - name: Wait for node to register or become ready
   ansible.builtin.command:
     cmd: >-
       {{ rke2_bin_dir }}/kubectl --kubeconfig {{ rke2_kubeconfig }}
       get node {{ inventory_hostname }}
-      -o 'jsonpath={.status.conditions[?(@.type=="Ready")].status},{.status.conditions[?(@.type=="Ready")].reason}'
+      -o 'jsonpath={.status.nodeInfo.bootID},{.status.conditions[?(@.type=="Ready")].status},{.status.conditions[?(@.type=="Ready")].reason}'
   when: not ansible_check_mode
   delegate_to: "{{ inventory_hostname if rke2_type == 'server' else rke2_first_server }}"
   register: rke2_node_ready
+  vars:
+    rke2_node_boot_id: "{{ rke2_boot_id.content | b64decode | trim }}"
+    rke2_node_reported: "{{ rke2_node_ready.stdout | default('') }}"
   until: >-
-    rke2_node_ready.stdout.startswith('True')
-    or (not (rke2_node_ready_required | default(false))
-        and rke2_cni == 'none' and 'KubeletNotReady' in rke2_node_ready.stdout)
+    rke2_node_reported.split(',') | first == rke2_node_boot_id
+    and (rke2_node_reported.split(',')[1:2] == ['True']
+         or (not (rke2_node_ready_required | default(false))
+             and rke2_cni == 'none' and 'KubeletNotReady' in rke2_node_reported))
   retries: 40
   delay: 15
   changed_when: false
