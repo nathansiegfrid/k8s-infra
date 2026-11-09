@@ -15,7 +15,7 @@ rke2_server_token: ""
 rke2_agent_token: ""
 
 # See available versions in https://docs.rke2.io/release-notes/v1.34.X
-rke2_version: v1.34.7+rke2r1
+rke2_version: v1.34.13+rke2r1
 
 # Pod Security Admission enforces `restricted` as of the cluster's minor version.
 rke2_psa_enforce_version: "{{ rke2_version.split('.')[:2] | join('.') }}"
