@@ -17,6 +17,12 @@ Verify that `01-mesh.yaml` and `02-cluster.yaml` build the cluster in each of th
 - [ ] Change a value in a component's `values.yaml` in k8s-fleet and push. Verify Flux upgrades the release without a field-manager conflict.
 - [ ] Run `03-flux.yaml` again. Verify it makes no Helm calls and leaves the FluxInstance alone.
 
+## Upgrade
+
+- [ ] Change `rke2_version` and run `upgrade.yaml`. Verify it goes one node at a time, masters first: each node is drained, rebooted, `Ready` and uncordoned before the next one starts, and before a master goes down, every etcd member is `Ready`.
+- [ ] Verify `kubectl get nodes` shows the new version on every node, and everything in `kubectl -n flux-system get fluxinstance,kustomizations,helmreleases` is `Ready`.
+- [ ] Run `upgrade.yaml` again without changes. Verify no node is drained or rebooted, unless the OS asks for a reboot.
+
 ## etcd snapshots with `rke2_etcd_s3: true`
 
 - [ ] Run `sudo rke2 etcd-snapshot save` on a master, then verify the snapshot shows in `sudo rke2 etcd-snapshot list` and in the bucket's console.
