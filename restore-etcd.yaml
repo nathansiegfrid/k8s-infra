@@ -5,7 +5,8 @@
 # run etcd: stop rke2-server and delete its server/db, or rebuild it.
 # Afterwards, 02-cluster.yaml starts the other masters again, and they join
 # the restored cluster; rebuilt ones need 01-mesh.yaml first. Workers
-# reconnect on their own.
+# reconnect on their own, and this playbook marks them for a reboot: run
+# upgrade.yaml afterwards to reboot them one at a time.
 #
 #   ansible-playbook restore-etcd.yaml -e rke2_etcd_snapshot_name=<NAME>
 
@@ -26,3 +27,22 @@
       ansible.builtin.import_role:
         name: rke2
         tasks_from: etcd_restore
+
+# A worker that kept running through the restore still holds what it saw
+# after the snapshot: its Node and pods come back unchanged, so the kubelet
+# keeps the same Cilium agent running, which can't match its pods to the
+# restored API, and their traffic is dropped until the worker restarts.
+# Marking it lets upgrade.yaml drain and reboot it like an OS update would.
+# The other masters don't need it because the restore deletes their Nodes.
+- name: Mark workers for a reboot
+  hosts: k8s_worker_nodes
+  become: true
+  gather_facts: false
+  ignore_unreachable: true
+
+  tasks:
+    - name: Mark the worker for a reboot
+      ansible.builtin.file:
+        path: /var/run/reboot-required
+        state: touch
+        mode: "0644"

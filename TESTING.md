@@ -34,4 +34,4 @@ Run these on freshly reinstalled VPSs. A node where RKE2 was only uninstalled ca
 
 - [ ] Reinstall the masters and run `01-mesh.yaml`, then `restore-etcd.yaml` on the first master. Verify that `02-cluster.yaml` then joins the other masters to the restored cluster.
 - [ ] Verify the snapshot's data is back: a ConfigMap created before the snapshot and deleted after it exists again after the restore.
-- [ ] Verify that a worker from before the restore reconnects on its own.
+- [ ] Verify that a worker from before the restore reconnects, and that `upgrade.yaml` then drains and reboots it, after which its pods run.
