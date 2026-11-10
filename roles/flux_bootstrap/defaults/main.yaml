@@ -21,10 +21,10 @@ flux_bootstrap_kubectl: /var/lib/rancher/rke2/bin/kubectl
 flux_bootstrap_kubeconfig: /etc/rancher/rke2/rke2.yaml
 
 # Helm on the first master, for the bootstrap only. The version Flux's
-# helm-controller is built on (Flux 2.9: v4.2.4), so the releases Flux
+# helm-controller is built on (Flux 2.10: v4.3.1), so the releases Flux
 # adopts were installed by the same Helm.
 # https://github.com/helm/helm/releases
-flux_bootstrap_helm_version: v4.2.4
+flux_bootstrap_helm_version: v4.3.1
 flux_bootstrap_helm: /usr/local/bin/helm
 flux_bootstrap_helm_arch: "{{ {'x86_64': 'amd64', 'aarch64': 'arm64'}[ansible_facts['architecture']] }}"
 
