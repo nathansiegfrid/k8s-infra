@@ -19,6 +19,9 @@ k8s_nodes:
     k8s_worker_nodes:
 
 # The first master bootstraps the cluster, and etcd restores run on it.
+# Keep the masters' WireGuard IPs in 10.0.0.0/29 (10.0.0.1 to 10.0.0.7):
+# k8s-fleet's host firewall lets only that range reach etcd while a master
+# joins, so workers and admin machines need addresses outside it.
 k8s_master_nodes:
   hosts:
     k8s-master-01:
