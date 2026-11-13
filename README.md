@@ -12,7 +12,7 @@ DNS records are still Terraform, in `terraform/`, until k8s-fleet's external-dns
 - **A WireGuard full mesh** between the nodes, which share no private network. Each node's private key is generated on the node and never leaves it. Admin machines join as extra peers.
 - **Nodes ready for Kubernetes:** hostname, timezone, NTP, swap off, kernel modules and sysctls. The OS is upgraded only before RKE2 is installed.
 - **RKE2 with the CIS profile.** Pod Security `restricted` is the default for every namespace except `kube-system`. API audit logging is on, the kubelet reserves 1 CPU and 1.5Gi for Kubernetes and the OS, and control-plane nodes are tainted `NoSchedule`.
-- **etcd snapshots** every 6 hours to S3-compatible storage, keeping 28 (7 days).
+- **etcd snapshots** every 6 hours to S3-compatible storage, keeping 28 per master (7 days).
 - **Flux.** Cilium and Flux Operator are installed from k8s-fleet's own files, along with the two secrets Flux can't get from git. Flux then takes over.
 
 ## Layout

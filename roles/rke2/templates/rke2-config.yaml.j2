@@ -68,8 +68,8 @@ node-taint:
   # RKE2 components explicitly tolerate NoSchedule.
   - node-role.kubernetes.io/control-plane:NoSchedule
 
-etcd-snapshot-schedule-cron: "0 */6 * * *"
-etcd-snapshot-retention: 28
+etcd-snapshot-schedule-cron: {{ rke2_etcd_snapshot_schedule_cron | to_json }}
+etcd-snapshot-retention: {{ rke2_etcd_snapshot_retention | int }}
 
 {% if rke2_etcd_s3 %}
 etcd-s3: true
@@ -78,5 +78,6 @@ etcd-s3-region: {{ rke2_etcd_s3_region | to_json }}
 etcd-s3-endpoint: {{ rke2_etcd_s3_endpoint | to_json }}
 etcd-s3-access-key: {{ rke2_etcd_s3_access_key | to_json }}
 etcd-s3-secret-key: {{ rke2_etcd_s3_secret_key | to_json }}
+etcd-s3-retention: {{ rke2_etcd_s3_retention | int }}
 {% endif %}
 {% endif %}

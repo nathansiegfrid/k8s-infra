@@ -26,7 +26,7 @@ Verify that `01-mesh.yaml` and `02-cluster.yaml` build the cluster in each of th
 ## etcd snapshots with `rke2_etcd_s3: true`
 
 - [ ] Run `sudo rke2 etcd-snapshot save` on a master, then verify the snapshot shows in `sudo rke2 etcd-snapshot list` and in the bucket's console.
-- [ ] After 7 days, verify each master has no more than 28 scheduled snapshots in the bucket. Make sure the bucket is configured to allow deletion, or use a lifecycle rule to delete old snapshots.
+- [ ] After 7 days, verify the bucket holds 28 scheduled snapshots from each master, 84 with three. Make sure the bucket is configured to allow deletion, or use a lifecycle rule to delete old snapshots.
 
 ## etcd restore
 
