@@ -18,14 +18,20 @@ flowchart LR
     nodes["RKE2 masters and workers"]
     flux["Flux"]
   end
-  infra[(k8s-infra)] --> you["Your machine<br>Ansible, SOPS, WireGuard"]
-  fleet[(k8s-fleet)] -.->|cloned at bootstrap| you
+  infra[(k8s-infra)]
+  fleet[(k8s-fleet)]
+  apps[(k8s-apps)]
+  you["Your machine<br>Ansible, SOPS, WireGuard"]
+  s3[(S3 storage)]
+  dns[(Cloudflare DNS)]
+  infra --> you
+  fleet -.->|cloned at bootstrap| you
   you -->|SSH over WireGuard| nodes
   you -->|bootstrap, on the first master| flux
   fleet -->|synced from main| flux
-  apps[(k8s-apps)] -->|synced as tenant-01| flux
-  nodes -->|etcd snapshots| s3[(S3 storage)]
-  flux -->|external-dns, cert-manager| dns[(Cloudflare DNS)]
+  apps -->|synced as tenant-01| flux
+  nodes -->|etcd snapshots| s3
+  flux -->|external-dns, cert-manager| dns
 ```
 
 ### How a cluster comes up
