@@ -2,10 +2,6 @@
 
 Ansible that turns plain VPSs from different providers into an RKE2 cluster, then bootstraps Flux from [k8s-fleet](https://github.com/nathansiegfrid/k8s-fleet).
 
-## Migration in progress
-
-DNS records are still Terraform, in `terraform/`, until k8s-fleet's external-dns manages them from the cluster's routes.
-
 ## What it builds
 
 - **An admin user and hardened SSH on every host:** key auth only, no root login, Fail2Ban.
@@ -27,7 +23,6 @@ destroy.yaml        remove RKE2 from every node
 roles/              one role per concern, listed under "Building the cluster"
 inventory/          hosts.yaml (git-ignored), group_vars, and secrets.sops.yaml
 generated/          WireGuard client configs (git-ignored)
-terraform/          DNS records, until they move to k8s-fleet
 ```
 
 ## Requirements
@@ -123,6 +118,6 @@ For an admin machine, add it to `wireguard_extra_peers` and run `01-mesh.yaml`; 
 
 ## CI
 
-ansible-lint (production profile) runs without decrypting anything, and skips `terraform/` until it's migrated. A second job fails if any `*.sops.yaml` file isn't encrypted. Both run on every push to `main` and on pull requests.
+ansible-lint (production profile) runs without decrypting anything. A second job fails if any `*.sops.yaml` file isn't encrypted. Both run on every push to `main` and on pull requests.
 
 CI doesn't run the playbooks against real nodes. The manual test cases for that are in [TESTING.md](TESTING.md).
