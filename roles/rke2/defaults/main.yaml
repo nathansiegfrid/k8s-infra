@@ -15,6 +15,7 @@ rke2_server_token: ""
 rke2_agent_token: ""
 
 # See available versions in https://docs.rke2.io/release-notes/v1.35.X
+# renovate: datasource=github-releases depName=rancher/rke2 versioning=regex:^v(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)\+rke2r(?<build>\d+)$
 rke2_version: v1.35.10+rke2r1
 
 # Pod Security Admission enforces `restricted` as of the cluster's minor version.

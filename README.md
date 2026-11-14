@@ -96,7 +96,7 @@ The Flux bootstrap clones k8s-fleet's `main` fresh on every run, so it installs 
 
 ### Upgrade RKE2, the OS or RKE2's config
 
-Change `rke2_version` or the RKE2 config, then run `ansible-playbook upgrade.yaml`. It goes one node at a time, masters first. A node is drained and rebooted only when its RKE2 version or config changed, or the OS asks for a reboot. Before a master goes down, every etcd member has to be Ready, and each node has to be Ready again before the next one starts. A drain that doesn't finish in `rke2_drain_timeout` (2 minutes, 3 attempts) doesn't block the reboot.
+Change `rke2_version` or the RKE2 config, then run `ansible-playbook upgrade.yaml`. [Renovate](https://docs.renovatebot.com/) opens a pull request for each new RKE2 version, one per minor and one per patch, since RKE2 upgrades one minor at a time; merging it changes only the file, so `upgrade.yaml` still has to run. It goes one node at a time, masters first. A node is drained and rebooted only when its RKE2 version or config changed, or the OS asks for a reboot. Before a master goes down, every etcd member has to be Ready, and each node has to be Ready again before the next one starts. A drain that doesn't finish in `rke2_drain_timeout` (2 minutes, 3 attempts) doesn't block the reboot.
 
 ### Restore etcd
 

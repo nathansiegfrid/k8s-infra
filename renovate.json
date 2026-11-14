@@ -1,0 +1,22 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Versions with a `# renovate:` comment on the line above.",
+      "managerFilePatterns": ["/\\.ya?ml$/"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)(?: versioning=(?<versioning>\\S+))?\\n\\w+:\\s*\"?(?<currentValue>[^\"\\s]+)\"?"
+      ]
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "RKE2 upgrades one minor at a time, so each minor and each patch gets its own pull request.",
+      "matchPackageNames": ["rancher/rke2"],
+      "separateMultipleMinor": true,
+      "separateMinorPatch": true
+    }
+  ]
+}
