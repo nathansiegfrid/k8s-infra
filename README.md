@@ -2,6 +2,8 @@
 
 Ansible that turns plain VPSs from different providers into an RKE2 cluster, then bootstraps Flux from [k8s-fleet](https://github.com/nathansiegfrid/k8s-fleet).
 
+New here? Start with [ONBOARDING.md](ONBOARDING.md): how the repositories connect, and the one-time setup.
+
 ## What it builds
 
 - **An admin user and hardened SSH on every host:** key auth only, no root login, Fail2Ban.
