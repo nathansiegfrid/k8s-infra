@@ -24,7 +24,10 @@ rke2_psa_enforce_version: "{{ rke2_version.split('.')[:2] | join('.') }}"
 rke2_cni: none
 rke2_ingress_controller: none
 rke2_disable_kube_proxy: true
-rke2_disable_components: []
+rke2_disable_components:
+  # Bundled Gateway API CRDs for RKE2's built-in CNI and ingress, both disabled above.
+  # Disabled so its owner doesn't clash with the CRDs managed via GitOps.
+  - rke2-gateway-api-crd
 
 # Must not overlap with the nodes' private IPs or cloud internal network.
 rke2_cluster_cidr: 10.42.0.0/16
