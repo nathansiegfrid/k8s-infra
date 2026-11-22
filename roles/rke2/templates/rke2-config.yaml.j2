@@ -64,6 +64,10 @@ kube-apiserver-arg:
   - audit-log-maxbackup=10
   - audit-log-maxsize=100
 
+# The jobs that install RKE2's bundled charts default to 32 CPU / 32G limits.
+helm-controller-arg:
+  - 'job-resources={"requests": {"cpu": "10m", "memory": "64Mi"}, "limits": {"cpu": "1", "memory": "512Mi"}}'
+
 node-taint:
   # RKE2 components explicitly tolerate NoSchedule.
   - node-role.kubernetes.io/control-plane:NoSchedule
