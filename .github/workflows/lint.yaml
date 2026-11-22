@@ -12,7 +12,7 @@ jobs:
       # Lint without decrypting secrets.sops.yaml: CI has no age key.
       ANSIBLE_VARS_ENABLED: host_group_vars
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
@@ -28,7 +28,7 @@ jobs:
   secrets:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Check every *.sops.yaml is encrypted
         run: |
