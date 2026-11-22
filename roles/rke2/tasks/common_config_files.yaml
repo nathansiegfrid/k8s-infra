@@ -23,7 +23,6 @@
     mode: "0700"
   when: rke2_type == 'server'
   loop:
-    - "{{ rke2_data_dir }}/server/manifests"
     - /var/log/kubernetes
 
 - name: Write RKE2 config
