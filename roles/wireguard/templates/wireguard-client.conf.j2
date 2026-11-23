@@ -14,7 +14,7 @@ PrivateKey = {{ item.private_key | default('<REPLACE_WITH_PRIVATE_KEY>') }}
 Address = {{ item.allowed_ips.split('/')[0] }}/24
 MTU = {{ item.mtu | default(wireguard_client_mtu) }}
 
-{% for host in groups['k8s_nodes'] %}
+{% for host in groups[item.group | default('k8s_nodes')] %}
 # {{ host }}
 [Peer]
 PublicKey = {{ hostvars[host].wireguard_public_key }}

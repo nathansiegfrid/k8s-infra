@@ -21,6 +21,8 @@ wireguard_dir: /etc/wireguard
 #   private_key: "<optional: written into the client config>"
 #   mtu: <optional: defaults to 1280>
 #   persistent_keepalive: <optional: seconds, 0 for none; defaults to 25>
+#   group: <optional: the inventory group it peers with, e.g. k8s_worker_nodes;
+#     defaults to k8s_nodes. Other nodes don't list it, so it can't reach them.>
 wireguard_extra_peers: []
 
 # Where their client configs are written, on this machine.

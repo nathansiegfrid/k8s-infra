@@ -23,7 +23,7 @@ PersistentKeepalive = {{ wireguard_persistent_keepalive }}
 
 {% endif %}
 {% endfor %}
-{% for peer in wireguard_extra_peers %}
+{% for peer in wireguard_extra_peers if inventory_hostname in groups[peer.group | default('k8s_nodes')] %}
 # {{ peer.name }}
 [Peer]
 PublicKey = {{ peer.public_key }}
