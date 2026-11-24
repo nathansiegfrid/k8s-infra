@@ -1,0 +1,4 @@
+---
+rke2_node_labels:
+  - siegfrid.com/public-gateway=true
+  - siegfrid.com/private-gateway=true

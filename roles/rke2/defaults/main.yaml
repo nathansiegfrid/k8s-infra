@@ -24,6 +24,10 @@ rke2_psa_enforce_version: "{{ rke2_version.split('.')[:2] | join('.') }}"
 rke2_cni: none
 rke2_ingress_controller: none
 rke2_disable_kube_proxy: true
+
+# Labels for this node, as `key=value`.
+rke2_node_labels: []
+
 rke2_disable_components:
   # Bundled Gateway API CRDs for RKE2's built-in CNI and ingress, both disabled above.
   # Disabled so its owner doesn't clash with the CRDs managed via GitOps.

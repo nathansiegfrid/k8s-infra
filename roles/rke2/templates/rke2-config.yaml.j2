@@ -7,6 +7,13 @@ profile: cis
 
 node-name: {{ inventory_hostname }}
 node-ip: {{ node_private_ip }}
+{% if rke2_node_labels | length > 0 %}
+# Applied when the node registers; an existing node needs `kubectl label`.
+node-label:
+{% for label in rke2_node_labels %}
+  - {{ label | to_json }}
+{% endfor %}
+{% endif %}
 
 {% if rke2_type == 'server' %}
 token: {{ rke2_server_token | to_json }}
