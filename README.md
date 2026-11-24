@@ -43,7 +43,7 @@ The nodes run Ubuntu or Debian.
 1. **Your age key.** Run `age-keygen -o <key file>`. SOPS looks for it at `~/Library/Application Support/sops/age/keys.txt` on macOS, `~/.config/sops/age/keys.txt` on Linux, or wherever `SOPS_AGE_KEY_FILE` points. Put its public key in `.sops.yaml`.
 2. **The cluster's age key.** Run `age-keygen -o cluster.agekey`. The private key goes into `flux_sops_age_key` below; Flux uses it to decrypt k8s-fleet's secrets.
 3. **A deploy key.** Run `ssh-keygen -t ed25519 -N '' -f k8s-fleet-deploy` and add the `.pub` to k8s-fleet as a read-only deploy key. The private key goes into `flux_git_deploy_key`.
-4. **The inventory.** Copy `inventory/hosts.yaml.example` to `inventory/hosts.yaml` and fill in the real IPs. It's git-ignored.
+4. **The inventory.** Copy `inventory/hosts.yaml.example` to `inventory/hosts.yaml` and fill in the real IPs. It's git-ignored. Set the admin user, `ssh_user` and `ssh_public_key`, in `inventory/group_vars/all/main.yaml`.
 5. **The secrets.** Run `sops inventory/group_vars/k8s_nodes/secrets.sops.yaml`; SOPS encrypts the file when you save:
 
 ```yaml

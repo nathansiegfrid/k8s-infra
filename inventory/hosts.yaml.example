@@ -1,29 +1,21 @@
 ---
 # Copy to hosts.yaml (git-ignored) and fill in the real IPs.
 #
-# node_public_ip:  the provider's address, used until WireGuard is up
-# node_private_ip: the node's WireGuard address, used for everything after
+#   node_public_ip:  the provider's address, used until WireGuard is up
+#   node_private_ip: the node's WireGuard address
 #
-# Hosts outside k8s_nodes are allowed: they get the admin user and SSH
-# hardening only.
-
-all:
-  vars:
-    ssh_default_user: root # the provider's default user on a new VPS
-    ssh_user: non_root_superuser
-    ssh_public_key: "ssh-ed25519 AAAA..."
+# Every other var lives in group_vars.
 
 k8s_nodes:
   children:
     k8s_master_nodes:
     k8s_worker_nodes:
 
-# The first master bootstraps the cluster, and etcd restores run on it.
-# Keep the masters' WireGuard IPs in 10.0.0.0/29 (10.0.0.1 to 10.0.0.7):
-# k8s-fleet's host firewall lets only that range reach etcd while a master
-# joins, so workers and admin machines need addresses outside it.
+# Keep the masters' WireGuard IPs in 10.0.0.0/29 (10.0.0.1 to 10.0.0.7).
+# k8s-fleet's host firewall lets only that range reach etcd.
 k8s_master_nodes:
   hosts:
+    # The first master bootstraps the cluster, and etcd restores run on it.
     k8s-master-01:
       node_public_ip: <PUBLIC_IP>
       node_private_ip: 10.0.0.1

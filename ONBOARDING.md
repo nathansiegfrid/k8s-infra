@@ -110,7 +110,7 @@ The public parts: your age key goes in both `.sops.yaml` files, the cluster's ag
 ### k8s-infra
 
 - [ ] **The secrets.** Run `sops inventory/group_vars/k8s_nodes/secrets.sops.yaml` and fill in the template from the [README](README.md#setup).
-- [ ] **The inventory.** Create `inventory/hosts.yaml` from `inventory/hosts.yaml.example`. It's git-ignored because it holds the real IPs.
+- [ ] **The inventory.** Create `inventory/hosts.yaml` from `inventory/hosts.yaml.example`. It's git-ignored because it holds the real IPs. Set the admin user, `ssh_user` and `ssh_public_key`, in `inventory/group_vars/all/main.yaml`.
 
 ### First build
 
