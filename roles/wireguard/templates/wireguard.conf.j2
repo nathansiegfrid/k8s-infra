@@ -2,7 +2,7 @@
 # Do not edit manually, changes will be overwritten.
 
 [Interface]
-Address = {{ node_private_ip }}/24
+Address = {{ node_private_ip }}/{{ wireguard_prefix_length }}
 ListenPort = {{ wireguard_port }}
 MTU = {{ wireguard_mtu }}
 
@@ -27,6 +27,6 @@ PersistentKeepalive = {{ wireguard_persistent_keepalive }}
 # {{ peer.name }}
 [Peer]
 PublicKey = {{ peer.public_key }}
-AllowedIPs = {{ peer.allowed_ips }}
+AllowedIPs = {{ peer.client_ip }}/32
 
 {% endfor %}

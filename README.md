@@ -56,8 +56,8 @@ rke2_etcd_s3_access_key: <access key>
 rke2_etcd_s3_secret_key: <secret key>
 wireguard_extra_peers:
   - name: laptop
+    client_ip: 10.0.3.1
     public_key: <from `wg pubkey` on the laptop>
-    allowed_ips: 10.0.0.100/32
     private_key: <optional: the laptop's private key, written into its client config>
 flux_git_deploy_key: |
   <the deploy key's private half>

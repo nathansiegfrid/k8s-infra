@@ -2,7 +2,7 @@
 # Copy to hosts.yaml (git-ignored) and fill in the real IPs.
 #
 #   node_public_ip:  the provider's address, used until WireGuard is up
-#   node_private_ip: the node's WireGuard address
+#   node_private_ip: the node's WireGuard address (10.0.0.0/24)
 #
 # Every other var lives in group_vars.
 

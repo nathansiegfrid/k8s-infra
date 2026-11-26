@@ -1,6 +1,8 @@
 ---
 wireguard_interface: wg0
 wireguard_port: 51820
+# The mesh is 10.0.0.0/22: nodes in 10.0.0.0/24 and extra peers in 10.0.3.0/24.
+wireguard_prefix_length: 22
 # The mesh's tunnel MTU on every node: WireGuard's own default, a
 # 1500-byte path minus the 80 bytes WireGuard adds at most (over IPv6).
 # Set here rather than left to wg-quick, which derives it from each node's
@@ -16,13 +18,12 @@ wireguard_dir: /etc/wireguard
 
 # Machines outside the cluster that join the mesh, such as an admin's laptop:
 # - name: laptop
+#   client_ip: 10.0.3.1
 #   public_key: "<from `wg pubkey`>"
-#   allowed_ips: 10.0.0.100/32
 #   private_key: "<optional: written into the client config>"
 #   mtu: <optional: defaults to 1280>
 #   persistent_keepalive: <optional: seconds, 0 for none; defaults to 25>
-#   group: <optional: the inventory group it peers with, e.g. k8s_worker_nodes;
-#     defaults to k8s_nodes. Other nodes don't list it, so it can't reach them.>
+#   group: <optional: the inventory group it peers with, defaults to k8s_nodes>
 wireguard_extra_peers: []
 
 # Where their client configs are written, on this machine.

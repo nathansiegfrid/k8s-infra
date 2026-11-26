@@ -82,6 +82,8 @@
     daemon_reload: true
 
 # Not a handler: peers must be loaded before the connectivity check below.
+# This updates peers only. A changed Address (wireguard_prefix_length) needs
+# a restart on each node: `systemd-run --on-active=5 systemctl restart wg-quick@wg0`.
 - name: Apply config changes without restarting the interface # noqa: no-handler
   ansible.builtin.shell:
     cmd: >-

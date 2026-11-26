@@ -11,7 +11,7 @@
 
 [Interface]
 PrivateKey = {{ item.private_key | default('<REPLACE_WITH_PRIVATE_KEY>') }}
-Address = {{ item.allowed_ips.split('/')[0] }}/24
+Address = {{ item.client_ip }}/{{ wireguard_prefix_length }}
 MTU = {{ item.mtu | default(wireguard_client_mtu) }}
 
 {% for host in groups[item.group | default('k8s_nodes')] %}
