@@ -35,7 +35,7 @@ flowchart LR
 3. `02-cluster.yaml` sets up the OS and RKE2 on the nodes. The nodes stay `NotReady` until Cilium runs.
 4. `03-flux.yaml` bootstraps Flux. It makes a fresh clone of k8s-fleet's `main` on your machine, so a local edit can't reach the cluster, then, on the first master, installs Cilium and Flux Operator with Helm from that clone's files, creates two Secrets, and applies the FluxInstance. Cilium goes first because nothing schedules without a CNI, Flux included.
 5. Flux syncs `clusters/homelab` from GitHub and adopts the Cilium and Flux Operator releases. From then on k8s-fleet owns them: don't change them with Ansible or Helm again.
-6. Flux applies the rest in dependency order: the Gateway API CRDs, the host firewall, cert-manager, external-dns and Istio, then the Gateway, then the tenants, after the admission policies for their namespaces.
+6. Flux applies the rest in dependency order. Istio waits for Cilium and the Gateway API CRDs, and the Gateway waits for Istio and cert-manager. The tenants wait for the Gateway, the host firewall, pods' denied egress and the admission policies for their namespaces. Everything else, such as external-dns and monitoring, starts without holding up the tenants.
 7. Each tenant's repository syncs into its own namespace, with `admin` rights there and nowhere else.
 
 ### Where a change goes
@@ -125,10 +125,5 @@ The public parts: your age key goes in both `.sops.yaml` files, the cluster's ag
 	```
 
 	Every node should be `Ready`, and every Flux object `True` under `READY`. If only external-dns or the Gateway isn't, check the Cloudflare tokens.
-- [ ] Check the way back in: log in as root through the provider's web console on a master. The host firewall allows SSH only over WireGuard, and from a master, kubectl can fix the policies. Hostinger's web console logs in over SSH, so it doesn't work without it.
+- [ ] Check the way back in: log in as root through the provider's web console on a master. The host firewall allows SSH only from VPN clients, and from a master, kubectl can fix the policies. Hostinger's web console logs in over SSH, so it doesn't work without it.
 - [ ] Install the [Renovate GitHub App](https://github.com/apps/renovate) on k8s-infra and k8s-fleet.
-
-## Before a second tenant
-
-- **Hostnames aren't per tenant.** The Gateway's `https` listener accepts routes from any namespace for any `*.siegfrid.com` name, and external-dns publishes whatever names routes declare. Its TXT ownership records stop a tenant from taking over records it didn't create, but not from claiming a name another tenant wanted.
-- **Tenants have no quotas.** There's no ResourceQuota, LimitRange or default-deny network policy in tenant namespaces yet.
