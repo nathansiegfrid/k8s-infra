@@ -9,7 +9,7 @@ Ansible playbooks that bootstrap an RKE2 cluster on Debian VPSs from different p
 VPSs from different providers share no private network, and each one is exposed to the internet through a public IP. So the cluster is built on top of a WireGuard mesh with SSH hardening:
 
 1. **Locked-down hosts.** Each host gets an admin user with your key and passwordless sudo. SSH accepts keys only and refuses root logins, and Fail2Ban runs on every host.
-2. **A WireGuard mesh.** Every node reaches every other node through an encrypted tunnel. Each node generates its own private key, which never leaves the node. The mesh uses `10.0.0.0/22`: nodes get addresses in `10.0.0.0/24`, and admin machines join as extra peers in `10.0.3.0/24`. Every later step connects over the mesh. Once k8s-fleet's host firewall is running, SSH and the Kubernetes API accept connections from outside the cluster only from `10.0.3.0/24`.
+2. **A WireGuard mesh.** Every node reaches every other node through an encrypted tunnel. Each node generates its own private key, which never leaves the node. The mesh uses `10.0.0.0/22`: nodes get addresses in `10.0.0.0/24`, and admin machines join as extra peers in `10.0.3.0/24`. Every later step connects over the mesh. Once k8s-fleet's host firewall is running, the Kubernetes API accepts connections from outside the cluster only from `10.0.3.0/24`, and SSH only from the admin's primary machine, `10.0.3.1`.
 3. **RKE2 with the CIS profile.** Pod Security `restricted` is the default outside `kube-system`, API audit logging is on, and the masters are tainted `NoSchedule`. etcd is snapshotted to S3-compatible storage every 6 hours, and snapshots are kept for 7 days.
 4. **Flux.** Cilium and Flux Operator are installed from k8s-fleet's own files, along with the two secrets Flux can't get from git. From there, k8s-fleet manages everything that runs on the cluster, including Cilium and Flux.
 
@@ -103,7 +103,7 @@ The restore brings the first master back from a snapshot. To find the snapshot's
 
 To add a node, add it to `inventory/hosts.yaml` and run `01-mesh.yaml`. Import the updated client config so your machine can reach the new node, then run `02-cluster.yaml`.
 
-To add an admin machine, add it to `wireguard_extra_peers` with a `client_ip` in `10.0.3.0/24`, run `01-mesh.yaml`, and import its config from `generated/`. To give a machine access to only some nodes, such as a tenant's device that only needs the workers, set the peer's `group` to that inventory group. The other nodes don't list the peer, so they drop its traffic. Other per-peer options, such as MTU and keepalive, are in `roles/wireguard/defaults/main.yaml`.
+To add an admin machine, add it to `wireguard_extra_peers` with a `client_ip` in `10.0.3.0/24`, run `01-mesh.yaml`, and import its config from `generated/`. To give a machine access to only some nodes, set the peer's `group` to that inventory group. The other nodes don't list the peer, so they drop its traffic. Other per-peer options, such as MTU and keepalive, are in `roles/wireguard/defaults/main.yaml`.
 
 ### Tear down
 
